@@ -114,6 +114,19 @@ export default function CompletionStep() {
     }
   };
 
+  const copyDashboardUrl = async () => {
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(dashboardUrl);
+        setTokenMessage('Dashboard URL copied to clipboard.');
+      } else {
+        setTokenMessage('Clipboard is unavailable in this environment.');
+      }
+    } catch {
+      setTokenMessage('Could not copy to clipboard. You can still open dashboard directly.');
+    }
+  };
+
   return (
     <StepContainer
       title=""
@@ -180,59 +193,68 @@ export default function CompletionStep() {
         />
       </div>
 
-      {!gatewayToken && (
-        <div className="rounded-xl border border-brand-warning/30 bg-brand-warning/10 px-4 py-3 mb-8">
-          <p className="text-[13px] font-medium text-brand-text">Dashboard token not found</p>
-          <p className="text-[12px] text-brand-muted mt-1">
-            {isElectronRuntime
-              ? 'The wizard could not read your gateway token yet. Try restarting the gateway, then open dashboard again.'
-              : 'Browser preview mode detected. Generate a tokenized URL with `openclaw dashboard --no-open` and open that URL.'}
-          </p>
-          {isElectronRuntime && (
-            <div className="mt-3 flex items-center gap-2">
-              <button
-                type="button"
-                onClick={fetchTokenAutomatically}
-                disabled={fetchingToken}
-                className={`px-3 py-2 rounded-md text-[12px] font-medium ${
-                  fetchingToken
-                    ? 'bg-brand-border text-brand-muted cursor-not-allowed'
-                    : 'btn-primary'
-                }`}
-              >
-                {fetchingToken ? 'Fetching token...' : 'Auto-fetch token'}
-              </button>
-              <span className="text-[11px] text-brand-muted">Runs in-app and copies dashboard URL</span>
-            </div>
-          )}
-          {!isElectronRuntime && (
-            <div className="mt-3 flex gap-2">
+      <div className={`rounded-xl border px-4 py-3 mb-8 ${
+        gatewayToken ? 'border-brand-success/30 bg-brand-success/10' : 'border-brand-warning/30 bg-brand-warning/10'
+      }`}>
+        <p className="text-[13px] font-medium text-brand-text">Dashboard Access</p>
+        <p className="text-[12px] text-brand-muted mt-1">
+          {gatewayToken
+            ? 'Gateway token detected and dashboard link is ready.'
+            : isElectronRuntime
+              ? 'Token is missing. Fetch it automatically, then open dashboard.'
+              : 'Browser preview mode: paste token (or full dashboard URL) below.'}
+        </p>
+        <p className="text-[11px] text-brand-muted mt-2">
+          Token status: {gatewayToken ? `Detected (${gatewayToken.slice(0, 6)}...${gatewayToken.slice(-4)})` : 'Not detected'}
+        </p>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {isElectronRuntime ? (
+            <button
+              type="button"
+              onClick={fetchTokenAutomatically}
+              disabled={fetchingToken}
+              className={`px-3 py-2 rounded-md text-[12px] font-medium ${
+                fetchingToken ? 'bg-brand-border text-brand-muted cursor-not-allowed' : 'btn-primary'
+              }`}
+            >
+              {fetchingToken ? 'Fetching token...' : gatewayToken ? 'Refresh token' : 'Auto-fetch token'}
+            </button>
+          ) : (
+            <>
               <input
                 type="text"
                 value={manualToken}
                 onChange={(e) => setManualToken(e.target.value)}
-                placeholder="Paste gateway token"
-                className="flex-1 rounded-md border border-brand-border bg-brand-surface px-3 py-2 text-[12px] text-brand-text placeholder:text-brand-muted focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                placeholder="Paste gateway token or tokenized URL"
+                className="flex-1 min-w-[220px] rounded-md border border-brand-border bg-brand-surface px-3 py-2 text-[12px] text-brand-text placeholder:text-brand-muted focus:outline-none focus:ring-1 focus:ring-brand-accent"
               />
               <button
                 type="button"
                 onClick={saveManualToken}
                 disabled={!manualToken.trim()}
                 className={`px-3 py-2 rounded-md text-[12px] font-medium ${
-                  manualToken.trim()
-                    ? 'btn-primary'
-                    : 'bg-brand-border text-brand-muted cursor-not-allowed'
+                  manualToken.trim() ? 'btn-primary' : 'bg-brand-border text-brand-muted cursor-not-allowed'
                 }`}
               >
                 Use token
               </button>
-            </div>
+            </>
           )}
-          {tokenMessage && (
-            <p className="text-[11px] text-brand-muted mt-2">{tokenMessage}</p>
-          )}
+
+          <button
+            type="button"
+            onClick={copyDashboardUrl}
+            className="px-3 py-2 rounded-md text-[12px] font-medium border border-brand-border text-brand-text hover:bg-brand-surface"
+          >
+            Copy dashboard URL
+          </button>
         </div>
-      )}
+
+        {tokenMessage && (
+          <p className="text-[11px] text-brand-muted mt-2">{tokenMessage}</p>
+        )}
+      </div>
 
       {/* Reset is available via the reset icon in the bottom bar */}
     </StepContainer>

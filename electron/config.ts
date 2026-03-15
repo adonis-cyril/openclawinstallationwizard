@@ -49,24 +49,43 @@ export async function installSkills(
 }
 
 export async function configureChannels(
-  channels: Record<string, Record<string, string>>,
+  channels: Record<string, Record<string, unknown>>,
   log: (text: string) => void
 ): Promise<void> {
   for (const [channel, settings] of Object.entries(channels)) {
     const safeChannel = sanitizeIdentifier(channel);
+    const enabled = settings.enabled !== false && settings.enabled !== 'false';
+    const token = typeof settings.token === 'string' ? settings.token.trim() : '';
+
+    if (!enabled) continue;
+    if (safeChannel === 'webchat') {
+      log('Web chat selected; no channel auth configuration required.\n');
+      continue;
+    }
+
     log(`Configuring channel: ${safeChannel}...\n`);
     try {
-      const args = ['configure', '--section', `channels.${safeChannel}`];
-      for (const [key, value] of Object.entries(settings)) {
-        const safeKey = sanitizeIdentifier(key);
-        args.push('--set', `${safeKey}=${value}`);
+      if (safeChannel === 'telegram' || safeChannel === 'discord') {
+        if (!token) {
+          throw new Error(`${safeChannel} requires a bot token`);
+        }
+        await runCommandWithArgs('openclaw', ['channels', 'add', '--channel', safeChannel, '--token', token]);
+
+        // Telegram dashboard expects raw mode in current OpenClaw builds.
+        if (safeChannel === 'telegram') {
+          await runCommandWithArgs('openclaw', ['config', 'set', 'channels.telegram.type', 'raw']);
+          await runCommandWithArgs('openclaw', ['config', 'set', 'channels.telegram.groupPolicy', 'open']);
+        }
+      } else if (safeChannel === 'whatsapp') {
+        // Creates/updates WhatsApp account config; user can finish linking via QR flow.
+        await runCommandWithArgs('openclaw', ['channels', 'add', '--channel', 'whatsapp']);
+      } else {
+        // Fallback for other channels supported by the CLI.
+        const args = ['channels', 'add', '--channel', safeChannel];
+        if (token) args.push('--token', token);
+        await runCommandWithArgs('openclaw', args);
       }
-      args.push('--set', 'enabled=true');
-      // For Telegram, set groupPolicy to "open" so group messages aren't dropped
-      if (safeChannel === 'telegram') {
-        args.push('--set', 'groupPolicy=open');
-      }
-      await runCommandWithArgs('openclaw', args);
+
       log(`Channel "${safeChannel}" configured successfully.\n`);
     } catch (error) {
       log(`Warning: Failed to configure channel "${safeChannel}": ${(error as Error).message}\n`);
