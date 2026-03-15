@@ -39,10 +39,10 @@ export default function ExplainerBox({
   const VariantIcon = config.Icon;
 
   return (
-    <div className={`rounded-lg border border-brand-border/30 border-l-2 ${config.borderColor} bg-brand-surface/30 overflow-hidden`}>
+    <div className={`rounded-lg border border-brand-border border-l-2 ${config.borderColor} bg-brand-surface overflow-hidden`}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-white/[0.02] transition-colors"
+        className="w-full flex items-center gap-2 px-4 py-2.5 hover:bg-brand-bg/50 transition-colors"
       >
         {isOpen ? (
           <ChevronDown className={`w-3.5 h-3.5 ${config.iconColor}`} />

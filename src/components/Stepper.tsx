@@ -2,39 +2,30 @@
 
 import { STEPS } from '@/data/steps';
 import { useWizardStore } from '@/lib/store';
-import {
-  Rocket, Lightbulb, Monitor, Download, Brain,
-  MessageSquare, Wrench, Zap, Server, BookOpen,
-  PartyPopper, Check,
-} from 'lucide-react';
-
-const iconMap: Record<string, React.FC<{ className?: string }>> = {
-  Rocket, Lightbulb, Monitor, Download, Brain,
-  MessageSquare, Wrench, Zap, Server, BookOpen, PartyPopper,
-};
+import { Check } from 'lucide-react';
 
 export default function Stepper() {
   const { currentStep, completedSteps, goToStep } = useWizardStore();
 
   return (
-    <nav className="w-60 min-h-screen bg-brand-surface/50 border-r border-brand-border/50 flex flex-col">
+    <nav className="w-60 min-h-screen bg-brand-surface border-r border-brand-border flex flex-col">
       {/* Logo */}
-      <div className="px-5 pt-6 pb-8">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-accent to-brand-purple flex items-center justify-center">
-            <span className="text-white text-sm font-bold">OC</span>
+      <div className="px-6 pt-8 pb-10">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-lg bg-brand-dark flex items-center justify-center">
+            <span className="text-brand-bg text-sm font-bold font-serif">OC</span>
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-brand-text tracking-tight">OpenClaw</h1>
+            <h1 className="text-[15px] font-serif font-semibold text-brand-text tracking-tight">OpenClaw</h1>
             <p className="text-[11px] text-brand-muted -mt-0.5">Setup Wizard</p>
           </div>
         </div>
       </div>
 
       {/* Steps */}
-      <div className="flex-1 px-3 relative">
+      <div className="flex-1 px-4 relative">
         {/* Connecting line */}
-        <div className="absolute left-[27px] top-0 bottom-0 w-px bg-brand-border/40" />
+        <div className="absolute left-[29px] top-0 bottom-0 w-px bg-brand-border" />
 
         <ol className="relative space-y-0.5">
           {STEPS.map((step, index) => {
@@ -47,23 +38,23 @@ export default function Stepper() {
                 <button
                   onClick={() => isClickable && goToStep(index)}
                   disabled={!isClickable}
-                  className={`w-full flex items-center gap-3 px-2.5 py-2 rounded-md text-[13px] transition-all duration-200 text-left group
+                  className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-md text-[13px] transition-all duration-200 text-left group
                     ${isCurrent
-                      ? 'text-brand-text bg-white/[0.04]'
+                      ? 'text-brand-text bg-brand-bg'
                       : isCompleted
                         ? 'text-brand-muted hover:text-brand-text'
-                        : 'text-brand-muted/50'
+                        : 'text-brand-muted-light'
                     }
-                    ${isClickable && !isCurrent ? 'hover:bg-white/[0.02] cursor-pointer' : !isClickable ? 'cursor-default' : ''}
+                    ${isClickable && !isCurrent ? 'hover:bg-brand-bg/50 cursor-pointer' : !isClickable ? 'cursor-default' : ''}
                   `}
                 >
                   {/* Step indicator */}
-                  <span className={`relative z-10 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200
+                  <span className={`relative z-10 flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 border
                     ${isCurrent
-                      ? 'bg-brand-accent shadow-glow'
+                      ? 'border-brand-accent bg-brand-accent'
                       : isCompleted
-                        ? 'bg-brand-success/20'
-                        : 'bg-brand-border/60'
+                        ? 'border-brand-success bg-brand-success/10'
+                        : 'border-brand-border bg-brand-surface'
                     }
                   `}>
                     {isCompleted ? (
@@ -71,7 +62,7 @@ export default function Stepper() {
                     ) : isCurrent ? (
                       <span className="w-1.5 h-1.5 rounded-full bg-white" />
                     ) : (
-                      <span className="w-1 h-1 rounded-full bg-brand-muted/40" />
+                      <span className="w-1 h-1 rounded-full bg-brand-muted-light" />
                     )}
                   </span>
 
@@ -86,17 +77,17 @@ export default function Stepper() {
       </div>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-brand-border/30">
+      <div className="px-6 py-4 border-t border-brand-border">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-brand-muted/60">
+          <span className="text-[11px] text-brand-muted">
             Step {currentStep + 1} of {STEPS.length}
           </span>
-          <div className="flex gap-0.5">
+          <div className="flex gap-1">
             {STEPS.map((_, i) => (
               <div
                 key={i}
                 className={`h-1 rounded-full transition-all duration-300 ${
-                  i <= currentStep ? 'w-2 bg-brand-accent' : 'w-1 bg-brand-border'
+                  i <= currentStep ? 'w-2.5 bg-brand-accent' : 'w-1 bg-brand-border'
                 }`}
               />
             ))}

@@ -23,25 +23,24 @@ export default function TerminalOutput({ title = 'Terminal Output', defaultOpen 
   if (terminalOutput.length === 0) return null;
 
   return (
-    <div className="mt-4 rounded-xl border border-brand-border/50 overflow-hidden">
-      {/* macOS-style title bar */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-brand-elevated/80 border-b border-brand-border/30">
+    <div className="mt-4 rounded-xl border border-brand-border overflow-hidden">
+      {/* Header bar */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-brand-surface border-b border-brand-border">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center gap-2 flex-1 text-left"
         >
-          {/* Traffic light dots */}
           <div className="flex items-center gap-1.5 mr-1">
-            <span className="w-2.5 h-2.5 rounded-full bg-brand-error/60" />
-            <span className="w-2.5 h-2.5 rounded-full bg-brand-warning/60" />
-            <span className="w-2.5 h-2.5 rounded-full bg-brand-success/60" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-error/40" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-warning/40" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-success/40" />
           </div>
 
-          <span className="text-[12px] text-brand-muted/70 font-medium tracking-wide">
+          <span className="text-[12px] text-brand-muted font-medium">
             {title}
           </span>
 
-          <span className="ml-auto flex items-center gap-1.5 text-[11px] text-brand-muted/40">
+          <span className="ml-auto flex items-center gap-1.5 text-[11px] text-brand-muted-light">
             {terminalOutput.length} lines
             {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           </span>
@@ -49,9 +48,9 @@ export default function TerminalOutput({ title = 'Terminal Output', defaultOpen 
       </div>
 
       {isOpen && (
-        <div className="bg-brand-elevated/80 p-4 max-h-64 overflow-y-auto font-mono text-[11px] leading-relaxed">
+        <div className="bg-brand-dark p-4 max-h-64 overflow-y-auto font-mono text-[11px] leading-relaxed">
           {terminalOutput.map((line, i) => (
-            <div key={i} className="text-amber-300/70 whitespace-pre-wrap break-all">
+            <div key={i} className="text-amber-200/80 whitespace-pre-wrap break-all">
               {line}
             </div>
           ))}

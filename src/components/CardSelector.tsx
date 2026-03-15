@@ -52,8 +52,8 @@ export default function CardSelector({
             onClick={() => onToggle(option.id)}
             className={`group relative text-left p-4 rounded-xl border transition-all duration-200
               ${isSelected
-                ? 'border-brand-accent/60 bg-brand-accent/[0.06] shadow-glow'
-                : 'border-brand-border/60 bg-brand-surface/50 hover:border-brand-border hover:bg-brand-elevated/50 hover:scale-[1.01]'
+                ? 'border-brand-accent bg-brand-surface shadow-card-hover'
+                : 'border-brand-border bg-brand-surface hover:border-brand-muted-light hover:shadow-card'
               }
             `}
           >
@@ -64,7 +64,7 @@ export default function CardSelector({
                   ? 'bg-brand-error/10 text-brand-error'
                   : option.badge === 'Recommended'
                     ? 'bg-brand-accent/10 text-brand-accent'
-                    : 'bg-brand-border text-brand-muted/70'
+                    : 'bg-brand-bg text-brand-muted'
                 }
               `}>
                 {option.badge}
@@ -74,8 +74,8 @@ export default function CardSelector({
             <div className="flex items-start gap-3">
               <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors duration-200
                 ${isSelected
-                  ? 'bg-brand-accent/15 text-brand-accent'
-                  : 'bg-brand-elevated text-brand-muted group-hover:text-brand-text'
+                  ? 'bg-brand-accent/10 text-brand-accent'
+                  : 'bg-brand-bg text-brand-muted group-hover:text-brand-text'
                 }
               `}>
                 <Icon className="w-[18px] h-[18px]" />
@@ -86,16 +86,16 @@ export default function CardSelector({
                 </h3>
                 <p className="text-[12px] text-brand-muted mt-0.5 leading-relaxed">{option.description}</p>
                 {option.example && (
-                  <p className="text-[11px] text-brand-muted/50 mt-2 italic leading-relaxed">
+                  <p className="text-[11px] text-brand-muted-light mt-2 italic leading-relaxed">
                     &ldquo;{option.example}&rdquo;
                   </p>
                 )}
               </div>
             </div>
 
-            {/* Selection indicator — subtle bottom bar */}
+            {/* Selection indicator — accent bottom line */}
             {isSelected && (
-              <div className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-brand-accent to-brand-purple" />
+              <div className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-brand-accent" />
             )}
           </button>
         );

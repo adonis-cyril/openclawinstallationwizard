@@ -9,8 +9,8 @@ interface StatusCheckProps {
 }
 
 const ROW_BG: Record<string, string> = {
-  pass: 'bg-brand-success/[0.04]',
-  fail: 'bg-brand-error/[0.04]',
+  pass: 'bg-brand-success/[0.06]',
+  fail: 'bg-brand-error/[0.06]',
 };
 
 export default function StatusCheck({ label, status, detail }: StatusCheckProps) {

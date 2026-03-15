@@ -70,7 +70,7 @@ export default function ChannelsStep() {
                 <span className={`flex-shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all
                   ${isSelected ? 'border-brand-accent bg-brand-accent' : 'border-brand-border'}
                 `}>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-brand-bg" />}
                 </span>
               </button>
 
@@ -127,7 +127,7 @@ export default function ChannelsStep() {
               {isExpanded && (
                 <button
                   onClick={() => setExpandedChannel(null)}
-                  className="w-full px-5 py-2 text-xs text-brand-muted hover:bg-white/5 border-t border-brand-border/50 transition-colors"
+                  className="w-full px-5 py-2 text-xs text-brand-muted hover:bg-brand-bg border-t border-brand-border/50 transition-colors"
                 >
                   Hide instructions
                 </button>

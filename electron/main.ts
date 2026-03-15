@@ -35,7 +35,7 @@ async function createWindow(): Promise<void> {
     height: 800,
     minWidth: 1024,
     minHeight: 700,
-    backgroundColor: '#0A0F1E',
+    backgroundColor: '#F5F0E8',
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -56,7 +56,7 @@ async function createWindow(): Promise<void> {
       mainWindow.loadURL(devUrl);
     } else {
       console.error('Dev server did not start in time');
-      mainWindow.loadURL(`data:text/html,<html><body style="background:#0A0F1E;color:#F9FAFB;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>Waiting for dev server...</h1><p>Run <code>npm run next:dev</code> first, then restart Electron.</p></div></body></html>`);
+      mainWindow.loadURL(`data:text/html,<html><body style="background:#F5F0E8;color:#1A1A1A;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>Waiting for dev server...</h1><p>Run <code>npm run next:dev</code> first, then restart Electron.</p></div></body></html>`);
     }
     mainWindow.webContents.openDevTools();
   } else {

@@ -59,7 +59,7 @@ export default function HooksStep() {
                 <span className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-all
                   ${isSelected ? 'border-brand-accent bg-brand-accent' : 'border-brand-border'}
                 `}>
-                  {isSelected && <Check className="w-3 h-3 text-white" />}
+                  {isSelected && <Check className="w-3 h-3 text-brand-bg" />}
                 </span>
 
                 <div className="flex-1">

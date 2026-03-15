@@ -12,7 +12,6 @@ interface StepContainerProps {
   nextLabel?: string;
   nextDisabled?: boolean;
   onNext?: () => void;
-  helpContent?: React.ReactNode;
 }
 
 export default function StepContainer({
@@ -33,14 +32,14 @@ export default function StepContainer({
   };
 
   return (
-    <div className="flex-1 flex flex-col h-screen ambient-glow">
-      <div className="flex-1 overflow-y-auto px-10 py-10 pb-28">
+    <div className="flex-1 flex flex-col h-screen bg-brand-bg">
+      <div className="flex-1 overflow-y-auto px-10 py-12 pb-28">
         <div className="max-w-2xl mx-auto animate-slide-up">
           {title && (
-            <div className="mb-8">
-              <h2 className="text-[22px] font-semibold text-brand-text tracking-tight leading-tight">{title}</h2>
+            <div className="mb-10">
+              <h2 className="text-2xl font-serif font-semibold text-brand-text tracking-tight leading-tight">{title}</h2>
               {subtitle && (
-                <p className="text-brand-muted text-[15px] mt-2 leading-relaxed">{subtitle}</p>
+                <p className="text-brand-muted text-[15px] mt-2.5 leading-relaxed">{subtitle}</p>
               )}
             </div>
           )}
@@ -48,7 +47,7 @@ export default function StepContainer({
         </div>
       </div>
 
-      <div className="border-t border-brand-border/30 bg-brand-surface/80 backdrop-blur-sm px-10 py-4">
+      <div className="border-t border-brand-border bg-brand-surface px-10 py-4">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
           {showBack && currentStep > 0 ? (
             <button
@@ -65,10 +64,10 @@ export default function StepContainer({
             <button
               onClick={handleNext}
               disabled={nextDisabled}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200
+              className={`flex items-center gap-2 px-6 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-200
                 ${nextDisabled
-                  ? 'bg-brand-border text-brand-muted/50 cursor-not-allowed'
-                  : 'btn-gradient text-white'
+                  ? 'bg-brand-border text-brand-muted cursor-not-allowed'
+                  : 'btn-primary'
                 }
               `}
             >
