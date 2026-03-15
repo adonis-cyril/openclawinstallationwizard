@@ -83,13 +83,12 @@ export function registerIpcHandlers(): void {
       let args: string[];
       switch (provider) {
         case 'anthropic':
+          // Use /v1/models endpoint — no tokens consumed, just validates the key
           args = [
             '-s', '-o', '/dev/null', '-w', '%{http_code}',
             '-H', `x-api-key: ${key}`,
-            '-H', 'content-type: application/json',
             '-H', 'anthropic-version: 2023-06-01',
-            '-d', '{"model":"claude-3-haiku-20240307","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}',
-            'https://api.anthropic.com/v1/messages',
+            'https://api.anthropic.com/v1/models',
           ];
           break;
         case 'openai':
