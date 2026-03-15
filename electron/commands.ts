@@ -72,8 +72,12 @@ export function runCommandWithArgs(binary: string, args: string[]): Promise<Comm
 
 export function streamCommand(
   cmd: string,
-  onData: (stream: 'stdout' | 'stderr', text: string) => void
+  onData: (stream: 'stdout' | 'stderr', text: string) => void,
+  options?: { timeoutMs?: number; detached?: boolean }
 ): Promise<number> {
+  const timeoutMs = options?.timeoutMs ?? 120000;
+  const detached = options?.detached ?? false;
+
   return new Promise((resolve, reject) => {
     const shell = getShell();
     const shellFlag = process.platform === 'win32' ? '/c' : '-c';
@@ -81,7 +85,21 @@ export function streamCommand(
     const child = spawn(shell, [shellFlag, cmd], {
       env: getEnhancedEnv(),
       stdio: ['ignore', 'pipe', 'pipe'],
+      detached,
     });
+
+    let settled = false;
+    let timer: NodeJS.Timeout | undefined;
+
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          try { child.kill(); } catch { /* ignore */ }
+          reject(new Error(`Command timed out after ${Math.round(timeoutMs / 1000)}s`));
+        }
+      }, timeoutMs);
+    }
 
     child.stdout.on('data', (data: Buffer) => {
       onData('stdout', data.toString());
@@ -92,6 +110,9 @@ export function streamCommand(
     });
 
     child.on('close', (code) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
       if (code === 0) {
         resolve(code);
       } else {
@@ -100,8 +121,16 @@ export function streamCommand(
     });
 
     child.on('error', (err) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
       reject(err);
     });
+
+    // For detached processes (like gateway start), unref so the parent can exit
+    if (detached) {
+      child.unref();
+    }
   });
 }
 

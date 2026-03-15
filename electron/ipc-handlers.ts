@@ -135,7 +135,7 @@ export function registerIpcHandlers(): void {
       if (win) {
         await streamCommand(onboardCmd, (stream, text) => {
           win.webContents.send('command-output', { stream, text });
-        });
+        }, { timeoutMs: 60000 });
       } else {
         await runCommand(onboardCmd);
       }
@@ -173,11 +173,32 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('start-gateway', async () => {
     const win = getMainWindow();
     try {
+      // Check if gateway is already running
+      try {
+        const healthResult = await runCommand('curl -s -o /dev/null -w "%{http_code}" http://localhost:18789/health');
+        const status = parseInt(healthResult.stdout.trim(), 10);
+        if (status >= 200 && status < 300) {
+          // Gateway already running — report all steps complete
+          const labels = [
+            'Setting up security token',
+            'Configuring gateway on port 18789',
+            'Installing background service',
+            'Starting your assistant',
+          ];
+          for (const label of labels) {
+            if (win) win.webContents.send('install-progress', { step: label, status: 'complete' });
+          }
+          return { success: true };
+        }
+      } catch {
+        // Not running, proceed with setup
+      }
+
       const steps = [
-        { label: 'Setting up security token', cmd: 'openclaw gateway token generate' },
-        { label: 'Configuring gateway on port 18789', cmd: 'openclaw configure --section gateway --set port=18789 --set bind=loopback' },
-        { label: 'Installing background service', cmd: 'openclaw daemon install' },
-        { label: 'Starting your assistant', cmd: 'openclaw gateway start' },
+        { label: 'Setting up security token', cmd: 'openclaw gateway token generate', timeout: 30000 },
+        { label: 'Configuring gateway on port 18789', cmd: 'openclaw configure --section gateway --set port=18789 --set bind=loopback', timeout: 30000 },
+        { label: 'Installing background service', cmd: 'openclaw daemon install', timeout: 60000 },
+        { label: 'Starting your assistant', cmd: 'openclaw gateway start', timeout: 15000, detached: true },
       ];
 
       for (const step of steps) {
@@ -187,18 +208,25 @@ export function registerIpcHandlers(): void {
         try {
           await streamCommand(step.cmd, (stream, text) => {
             if (win) win.webContents.send('command-output', { stream, text });
-          });
+          }, { timeoutMs: step.timeout, detached: (step as { detached?: boolean }).detached });
           if (win) {
             win.webContents.send('install-progress', { step: step.label, status: 'complete' });
           }
         } catch (error) {
+          const errMsg = (error as Error).message || '';
+          // For detached/daemon commands, a timeout is expected — the process is running in the background
+          if ((step as { detached?: boolean }).detached && errMsg.includes('timed out')) {
+            if (win) win.webContents.send('install-progress', { step: step.label, status: 'complete' });
+            continue;
+          }
+
           const healed = await attemptSelfHeal(step.cmd, error as Error, (text) => {
             if (win) win.webContents.send('command-output', { stream: 'stderr', text: `[Self-heal] ${text}\n` });
           });
           if (healed) {
             await streamCommand(step.cmd, (stream, text) => {
               if (win) win.webContents.send('command-output', { stream, text });
-            });
+            }, { timeoutMs: step.timeout });
             if (win) win.webContents.send('install-progress', { step: step.label, status: 'complete' });
           } else {
             if (win) win.webContents.send('install-progress', { step: step.label, status: 'error' });

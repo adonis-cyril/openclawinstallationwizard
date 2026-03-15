@@ -26,15 +26,46 @@ export default function GatewayStep() {
   ]);
   const [running, setRunning] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [alreadyRunning, setAlreadyRunning] = useState(false);
+  const [checking, setChecking] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
-    startGateway();
+    checkExistingGateway();
   }, []);
+
+  // Track elapsed time so user knows it's not frozen
+  useEffect(() => {
+    if (!running) return;
+    const interval = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(interval);
+  }, [running]);
+
+  async function checkExistingGateway() {
+    setChecking(true);
+    try {
+      const api = getAPI();
+      const health = await api.healthCheck();
+      if (health.healthy) {
+        setAlreadyRunning(true);
+        setSuccess(true);
+        setGatewayStarted(true);
+        setSteps((prev) => prev.map((s) => ({ ...s, status: 'pass' })));
+      } else {
+        startGateway();
+      }
+    } catch {
+      startGateway();
+    }
+    setChecking(false);
+  }
 
   async function startGateway() {
     setRunning(true);
+    setElapsed(0);
     setError(null);
+    setAlreadyRunning(false);
     clearTerminalOutput();
 
     const api = getAPI();
@@ -72,12 +103,19 @@ export default function GatewayStep() {
         // Mark all steps complete
         setSteps((prev) => prev.map((s, i) => (i < 4 ? { ...s, status: 'pass' } : s)));
 
-        // Health check
+        // Health check — retry a few times since gateway may need a moment
         setSteps((prev) => prev.map((s, i) => (i === 4 ? { ...s, status: 'checking' } : s)));
-        await new Promise((r) => setTimeout(r, 1000));
-        const health = await api.healthCheck();
+        let healthy = false;
+        for (let attempt = 0; attempt < 3; attempt++) {
+          await new Promise((r) => setTimeout(r, 1500));
+          const health = await api.healthCheck();
+          if (health.healthy) {
+            healthy = true;
+            break;
+          }
+        }
 
-        if (health.healthy) {
+        if (healthy) {
           setSteps((prev) => prev.map((s, i) => (i === 4 ? { ...s, status: 'pass' } : s)));
           setGatewayStarted(true);
           setSuccess(true);
@@ -103,38 +141,71 @@ export default function GatewayStep() {
   return (
     <StepContainer
       title="Start your assistant"
-      subtitle="Setting up the gateway and background service"
-      nextDisabled={running}
+      subtitle={alreadyRunning ? 'Your gateway is already running' : 'Setting up the gateway and background service'}
+      nextDisabled={checking}
       onNext={nextStep}
-      nextLabel={success ? 'Continue' : 'Continue Anyway'}
+      nextLabel={success ? 'Continue' : 'Skip for Now'}
     >
-      {/* Animation */}
-      <div className="flex justify-center mb-8">
-        <div className={`p-6 rounded-2xl ${success ? 'bg-brand-success/10' : running ? 'bg-brand-accent/10 animate-pulse-glow' : 'bg-brand-surface'}`}>
-          <Server className={`w-12 h-12 ${success ? 'text-brand-success' : 'text-brand-accent'}`} />
+      {/* Already running banner */}
+      {alreadyRunning && (
+        <div className="rounded-xl border border-brand-success/30 bg-brand-success/[0.06] p-5 mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-brand-success/10 flex items-center justify-center">
+              <Server className="w-5 h-5 text-brand-success" />
+            </div>
+            <div>
+              <h3 className="text-[15px] font-medium text-brand-text">Gateway is already running</h3>
+              <p className="text-[13px] text-brand-muted mt-0.5">
+                Health check passed on port 18789. You can continue to the next step.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={startGateway}
+            className="mt-4 text-[12px] text-brand-accent hover:underline"
+          >
+            Restart gateway anyway
+          </button>
         </div>
-      </div>
-
-      <div className="space-y-1 mb-6">
-        {steps.map((step) => (
-          <StatusCheck
-            key={step.label}
-            label={step.label}
-            status={step.status}
-          />
-        ))}
-      </div>
-
-      {error && (
-        <ErrorPanel
-          title="Gateway setup issue"
-          message={error}
-          suggestion="This sometimes takes a minute. Try again or check the terminal output for details."
-          onRetry={startGateway}
-        />
       )}
 
-      <TerminalOutput title="Gateway Output" />
+      {!alreadyRunning && (
+        <>
+          {/* Animation */}
+          <div className="flex justify-center mb-8">
+            <div className={`p-6 rounded-2xl ${success ? 'bg-brand-success/10' : running ? 'bg-brand-accent/10 animate-pulse-glow' : 'bg-brand-surface'}`}>
+              <Server className={`w-12 h-12 ${success ? 'text-brand-success' : 'text-brand-accent'}`} />
+            </div>
+          </div>
+
+          <div className="space-y-1 mb-6">
+            {steps.map((step) => (
+              <StatusCheck
+                key={step.label}
+                label={step.label}
+                status={step.status}
+              />
+            ))}
+          </div>
+
+          {running && elapsed > 5 && (
+            <p className="text-[12px] text-brand-muted text-center mb-4">
+              Running for {elapsed}s...
+            </p>
+          )}
+
+          {error && (
+            <ErrorPanel
+              title="Gateway setup issue"
+              message={error}
+              suggestion="This sometimes takes a minute. Try again or check the terminal output for details."
+              onRetry={startGateway}
+            />
+          )}
+
+          <TerminalOutput title="Gateway Output" />
+        </>
+      )}
 
       <div className="mt-6">
         <ExplainerBox title="What is the daemon?">
