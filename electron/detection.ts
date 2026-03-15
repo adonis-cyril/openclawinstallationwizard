@@ -74,10 +74,12 @@ async function checkDiskSpace(): Promise<{ diskSpaceGB: number }> {
         return { diskSpaceGB: Math.round(parseInt(match[1], 10) / 1073741824 * 10) / 10 };
       }
     } else {
-      const result = await runCommand("df -BG ~ | tail -1 | awk '{print $4}'");
+      // Use df -k (kilobytes) which works on both macOS and Linux
+      const result = await runCommand("df -k ~ | tail -1 | awk '{print $4}'");
       const match = result.stdout.match(/(\d+)/);
       if (match) {
-        return { diskSpaceGB: parseInt(match[1], 10) };
+        const kb = parseInt(match[1], 10);
+        return { diskSpaceGB: Math.round(kb / 1048576 * 10) / 10 };
       }
     }
     return { diskSpaceGB: 0 };
