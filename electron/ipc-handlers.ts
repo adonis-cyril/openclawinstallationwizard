@@ -188,7 +188,16 @@ export function registerIpcHandlers(): void {
           for (const label of labels) {
             if (win) win.webContents.send('install-progress', { step: label, status: 'complete' });
           }
-          // Try to retrieve existing token
+          // Restart to pick up any new config (channels, hooks, etc.)
+          try {
+            await streamCommand('openclaw gateway restart', (stream, text) => {
+              if (win) win.webContents.send('command-output', { stream, text });
+            }, { timeoutMs: 15000 });
+          } catch {
+            // Restart is best-effort — gateway is already running
+          }
+
+          // Retrieve existing token
           let token: string | undefined;
           try {
             const tokenResult = await runCommand('openclaw gateway token show');
@@ -261,6 +270,32 @@ export function registerIpcHandlers(): void {
       return { healthy: status >= 200 && status < 300 };
     } catch {
       return { healthy: false, error: 'Gateway is not responding' };
+    }
+  });
+
+  ipcMain.handle('get-gateway-token', async () => {
+    try {
+      const result = await runCommand('openclaw gateway token show');
+      const token = result.stdout.trim();
+      if (token) return { token };
+      return { token: null, error: 'No token found' };
+    } catch (error) {
+      return { token: null, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('restart-gateway', async () => {
+    const win = getMainWindow();
+    try {
+      await streamCommand('openclaw gateway restart', (stream, text) => {
+        if (win) win.webContents.send('command-output', { stream, text });
+      }, { timeoutMs: 15000 });
+      return { success: true };
+    } catch (error) {
+      const errMsg = (error as Error).message || '';
+      // Timeout is acceptable for a daemon restart
+      if (errMsg.includes('timed out')) return { success: true };
+      return { success: false, error: errMsg };
     }
   });
 
