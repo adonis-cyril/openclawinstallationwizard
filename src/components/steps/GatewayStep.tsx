@@ -90,7 +90,7 @@ export default function GatewayStep() {
 
     try {
       // Configure and start
-      const configResult = await api.configure(useWizardStore.getState().getSerializableState());
+      const configResult = await api.configure(useWizardStore.getState().getConfigPayload());
       if (!configResult.success) {
         throw new Error(configResult.error || 'Configuration failed');
       }

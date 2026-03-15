@@ -1,37 +1,39 @@
 import { runCommandWithArgs } from './commands';
 import { sanitizeIdentifier, sanitizePort } from './commands';
 
-export function buildConfigCommand(config: Record<string, unknown>): string {
+/**
+ * Build the openclaw onboard command as an args array.
+ * Returns { binary, args } for use with runCommandWithArgs / streamCommandWithArgs.
+ * API keys are passed as array elements — never interpolated into a shell string.
+ */
+export function buildConfigArgs(config: Record<string, unknown>): { binary: string; args: string[] } {
   const provider = sanitizeIdentifier((config.selectedProvider || config.provider) as string);
   const apiKey = config.apiKey as string;
   const model = (config.selectedModel || config.model) as string;
   const port = sanitizePort((config.gatewayPort as number) || 18789);
 
-  // Note: apiKey and model are passed via environment or --stdin in production.
-  // For the onboard command, these are passed as arguments to openclaw CLI
-  // which does NOT go through a shell (see runCommandWithArgs usage).
-  const parts = [
-    'openclaw onboard --non-interactive --accept-risk',
-    '--mode local',
-    '--auth-choice apiKey',
-    `--gateway-port ${port}`,
-    '--gateway-bind loopback',
+  const args = [
+    'onboard', '--non-interactive', '--accept-risk',
+    '--mode', 'local',
+    '--auth-choice', 'apiKey',
+    '--gateway-port', String(port),
+    '--gateway-bind', 'loopback',
     '--install-daemon',
-    '--daemon-runtime node',
+    '--daemon-runtime', 'node',
   ];
 
   if (provider === 'anthropic') {
-    parts.push(`--anthropic-api-key "${apiKey}"`);
-    if (model) parts.push(`--model "${sanitizeIdentifier(model)}"`);
+    args.push('--anthropic-api-key', apiKey);
+    if (model) args.push('--model', sanitizeIdentifier(model));
   } else if (provider === 'openai') {
-    parts.push(`--openai-api-key "${apiKey}"`);
-    if (model) parts.push(`--model "${sanitizeIdentifier(model)}"`);
+    args.push('--openai-api-key', apiKey);
+    if (model) args.push('--model', sanitizeIdentifier(model));
   } else if (provider === 'google') {
-    parts.push(`--google-api-key "${apiKey}"`);
-    if (model) parts.push(`--model "${sanitizeIdentifier(model)}"`);
+    args.push('--google-api-key', apiKey);
+    if (model) args.push('--model', sanitizeIdentifier(model));
   }
 
-  return parts.join(' \\\n  ');
+  return { binary: 'openclaw', args };
 }
 
 export async function installSkills(

@@ -88,50 +88,84 @@ export function streamCommand(
       detached,
     });
 
-    let settled = false;
-    let timer: NodeJS.Timeout | undefined;
+    setupStreamHandlers(child, onData, timeoutMs, detached, resolve, reject);
+  });
+}
 
-    if (timeoutMs > 0) {
-      timer = setTimeout(() => {
-        if (!settled) {
-          settled = true;
-          try { child.kill(); } catch { /* ignore */ }
-          reject(new Error(`Command timed out after ${Math.round(timeoutMs / 1000)}s`));
-        }
-      }, timeoutMs);
-    }
+/**
+ * Stream command output without shell interpolation.
+ * Arguments are passed as an array, preventing injection.
+ */
+export function streamCommandWithArgs(
+  binary: string,
+  args: string[],
+  onData: (stream: 'stdout' | 'stderr', text: string) => void,
+  options?: { timeoutMs?: number; detached?: boolean }
+): Promise<number> {
+  const timeoutMs = options?.timeoutMs ?? 120000;
+  const detached = options?.detached ?? false;
 
-    child.stdout.on('data', (data: Buffer) => {
-      onData('stdout', data.toString());
+  return new Promise((resolve, reject) => {
+    const child = spawn(binary, args, {
+      env: getEnhancedEnv(),
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached,
     });
 
-    child.stderr.on('data', (data: Buffer) => {
-      onData('stderr', data.toString());
-    });
+    setupStreamHandlers(child, onData, timeoutMs, detached, resolve, reject);
+  });
+}
 
-    child.on('close', (code) => {
-      if (settled) return;
-      settled = true;
-      if (timer) clearTimeout(timer);
-      if (code === 0) {
-        resolve(code);
-      } else {
-        reject(new Error(`Command failed with exit code ${code}`));
+function setupStreamHandlers(
+  child: ReturnType<typeof spawn>,
+  onData: (stream: 'stdout' | 'stderr', text: string) => void,
+  timeoutMs: number,
+  detached: boolean,
+  resolve: (code: number) => void,
+  reject: (err: Error) => void,
+): void {
+  let settled = false;
+  let timer: NodeJS.Timeout | undefined;
+
+  if (timeoutMs > 0) {
+    timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        try { child.kill(); } catch { /* ignore */ }
+        reject(new Error(`Command timed out after ${Math.round(timeoutMs / 1000)}s`));
       }
-    });
+    }, timeoutMs);
+  }
 
-    child.on('error', (err) => {
-      if (settled) return;
-      settled = true;
-      if (timer) clearTimeout(timer);
-      reject(err);
-    });
+  child.stdout?.on('data', (data: Buffer) => {
+    onData('stdout', data.toString());
+  });
 
-    // For detached processes (like gateway start), unref so the parent can exit
-    if (detached) {
-      child.unref();
+  child.stderr?.on('data', (data: Buffer) => {
+    onData('stderr', data.toString());
+  });
+
+  child.on('close', (code) => {
+    if (settled) return;
+    settled = true;
+    if (timer) clearTimeout(timer);
+    if (code === 0) {
+      resolve(code);
+    } else {
+      reject(new Error(`Command failed with exit code ${code}`));
     }
   });
+
+  child.on('error', (err) => {
+    if (settled) return;
+    settled = true;
+    if (timer) clearTimeout(timer);
+    reject(err);
+  });
+
+  if (detached) {
+    child.unref();
+  }
 }
 
 function getShell(): string {
