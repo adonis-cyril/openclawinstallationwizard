@@ -1,11 +1,15 @@
-import { runCommand, streamCommand } from './commands';
+import { runCommandWithArgs } from './commands';
+import { sanitizeIdentifier, sanitizePort } from './commands';
 
 export function buildConfigCommand(config: Record<string, unknown>): string {
-  const provider = config.provider as string;
+  const provider = sanitizeIdentifier(config.provider as string);
   const apiKey = config.apiKey as string;
   const model = config.model as string;
-  const port = (config.gatewayPort as number) || 18789;
+  const port = sanitizePort((config.gatewayPort as number) || 18789);
 
+  // Note: apiKey and model are passed via environment or --stdin in production.
+  // For the onboard command, these are passed as arguments to openclaw CLI
+  // which does NOT go through a shell (see runCommandWithArgs usage).
   const parts = [
     'openclaw onboard --non-interactive',
     '--mode local',
@@ -18,13 +22,13 @@ export function buildConfigCommand(config: Record<string, unknown>): string {
 
   if (provider === 'anthropic') {
     parts.push(`--anthropic-api-key "${apiKey}"`);
-    if (model) parts.push(`--model "${model}"`);
+    if (model) parts.push(`--model "${sanitizeIdentifier(model)}"`);
   } else if (provider === 'openai') {
     parts.push(`--openai-api-key "${apiKey}"`);
-    if (model) parts.push(`--model "${model}"`);
+    if (model) parts.push(`--model "${sanitizeIdentifier(model)}"`);
   } else if (provider === 'google') {
     parts.push(`--google-api-key "${apiKey}"`);
-    if (model) parts.push(`--model "${model}"`);
+    if (model) parts.push(`--model "${sanitizeIdentifier(model)}"`);
   }
 
   return parts.join(' \\\n  ');
@@ -35,12 +39,13 @@ export async function installSkills(
   log: (text: string) => void
 ): Promise<void> {
   for (const skill of skills) {
-    log(`Installing skill: ${skill}...\n`);
+    const safeName = sanitizeIdentifier(skill);
+    log(`Installing skill: ${safeName}...\n`);
     try {
-      await runCommand(`openclaw skills install ${skill}`);
-      log(`Skill "${skill}" installed successfully.\n`);
+      await runCommandWithArgs('openclaw', ['skills', 'install', safeName]);
+      log(`Skill "${safeName}" installed successfully.\n`);
     } catch (error) {
-      log(`Warning: Failed to install skill "${skill}": ${(error as Error).message}\n`);
+      log(`Warning: Failed to install skill "${safeName}": ${(error as Error).message}\n`);
     }
   }
 }
@@ -50,15 +55,19 @@ export async function configureChannels(
   log: (text: string) => void
 ): Promise<void> {
   for (const [channel, settings] of Object.entries(channels)) {
-    log(`Configuring channel: ${channel}...\n`);
+    const safeChannel = sanitizeIdentifier(channel);
+    log(`Configuring channel: ${safeChannel}...\n`);
     try {
-      const setFlags = Object.entries(settings)
-        .map(([key, value]) => `--set ${key}="${value}"`)
-        .join(' ');
-      await runCommand(`openclaw configure --section channels.${channel} ${setFlags} --set enabled=true`);
-      log(`Channel "${channel}" configured successfully.\n`);
+      const args = ['configure', '--section', `channels.${safeChannel}`];
+      for (const [key, value] of Object.entries(settings)) {
+        const safeKey = sanitizeIdentifier(key);
+        args.push('--set', `${safeKey}=${value}`);
+      }
+      args.push('--set', 'enabled=true');
+      await runCommandWithArgs('openclaw', args);
+      log(`Channel "${safeChannel}" configured successfully.\n`);
     } catch (error) {
-      log(`Warning: Failed to configure channel "${channel}": ${(error as Error).message}\n`);
+      log(`Warning: Failed to configure channel "${safeChannel}": ${(error as Error).message}\n`);
     }
   }
 }
@@ -68,12 +77,13 @@ export async function configureHooks(
   log: (text: string) => void
 ): Promise<void> {
   for (const hook of hooks) {
-    log(`Enabling hook: ${hook}...\n`);
+    const safeName = sanitizeIdentifier(hook);
+    log(`Enabling hook: ${safeName}...\n`);
     try {
-      await runCommand(`openclaw hooks enable ${hook}`);
-      log(`Hook "${hook}" enabled successfully.\n`);
+      await runCommandWithArgs('openclaw', ['hooks', 'enable', safeName]);
+      log(`Hook "${safeName}" enabled successfully.\n`);
     } catch (error) {
-      log(`Warning: Failed to enable hook "${hook}": ${(error as Error).message}\n`);
+      log(`Warning: Failed to enable hook "${safeName}": ${(error as Error).message}\n`);
     }
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronRight, Terminal } from 'lucide-react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useWizardStore } from '@/lib/store';
 
 interface TerminalOutputProps {
@@ -23,21 +23,35 @@ export default function TerminalOutput({ title = 'Terminal Output', defaultOpen 
   if (terminalOutput.length === 0) return null;
 
   return (
-    <div className="mt-4 rounded-lg border border-brand-border overflow-hidden">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-2.5 bg-brand-surface hover:bg-brand-surface/80 transition-colors text-sm text-brand-muted"
-      >
-        {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-        <Terminal className="w-4 h-4" />
-        {title}
-        <span className="ml-auto text-xs opacity-50">{terminalOutput.length} lines</span>
-      </button>
+    <div className="mt-4 rounded-xl border border-brand-border/50 overflow-hidden">
+      {/* macOS-style title bar */}
+      <div className="flex items-center gap-2 px-4 py-2.5 bg-brand-elevated/80 border-b border-brand-border/30">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 flex-1 text-left"
+        >
+          {/* Traffic light dots */}
+          <div className="flex items-center gap-1.5 mr-1">
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-error/60" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-warning/60" />
+            <span className="w-2.5 h-2.5 rounded-full bg-brand-success/60" />
+          </div>
+
+          <span className="text-[12px] text-brand-muted/70 font-medium tracking-wide">
+            {title}
+          </span>
+
+          <span className="ml-auto flex items-center gap-1.5 text-[11px] text-brand-muted/40">
+            {terminalOutput.length} lines
+            {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          </span>
+        </button>
+      </div>
 
       {isOpen && (
-        <div className="bg-black/50 p-4 max-h-64 overflow-y-auto font-mono text-xs leading-relaxed">
+        <div className="bg-brand-elevated/80 p-4 max-h-64 overflow-y-auto font-mono text-[11px] leading-relaxed">
           {terminalOutput.map((line, i) => (
-            <div key={i} className="text-green-400/80 whitespace-pre-wrap break-all">
+            <div key={i} className="text-amber-300/70 whitespace-pre-wrap break-all">
               {line}
             </div>
           ))}

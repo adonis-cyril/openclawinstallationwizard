@@ -38,11 +38,10 @@ export default function CardSelector({
   options,
   selected,
   onToggle,
-  multiSelect = true,
   columns = 2,
 }: CardSelectorProps) {
   return (
-    <div className={`grid gap-4 ${columns === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+    <div className={`grid gap-3 ${columns === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
       {options.map((option) => {
         const isSelected = selected.includes(option.id);
         const Icon = iconMap[option.icon] || Lightbulb;
@@ -51,51 +50,53 @@ export default function CardSelector({
           <button
             key={option.id}
             onClick={() => onToggle(option.id)}
-            className={`relative text-left p-5 rounded-xl border-2 transition-all
+            className={`group relative text-left p-4 rounded-xl border transition-all duration-200
               ${isSelected
-                ? 'border-brand-accent bg-brand-accent/5'
-                : 'border-brand-border hover:border-brand-border/80 bg-brand-surface hover:bg-brand-surface/80'
+                ? 'border-brand-accent/60 bg-brand-accent/[0.06] shadow-glow'
+                : 'border-brand-border/60 bg-brand-surface/50 hover:border-brand-border hover:bg-brand-elevated/50 hover:scale-[1.01]'
               }
             `}
           >
             {/* Badge */}
             {option.badge && (
-              <span className={`absolute top-3 right-3 text-xs px-2 py-0.5 rounded-full font-medium
+              <span className={`absolute top-3 right-3 text-[10px] px-1.5 py-0.5 rounded font-medium tracking-wide uppercase
                 ${option.badge === 'Required'
-                  ? 'bg-brand-error/20 text-brand-error'
+                  ? 'bg-brand-error/10 text-brand-error'
                   : option.badge === 'Recommended'
-                    ? 'bg-brand-accent/20 text-brand-accent'
-                    : 'bg-brand-border text-brand-muted'
+                    ? 'bg-brand-accent/10 text-brand-accent'
+                    : 'bg-brand-border text-brand-muted/70'
                 }
               `}>
                 {option.badge}
               </span>
             )}
 
-            {/* Selection indicator */}
-            {isSelected && (
-              <span className="absolute top-3 left-3 w-5 h-5 rounded-full bg-brand-accent flex items-center justify-center">
-                <Check className="w-3 h-3 text-white" />
-              </span>
-            )}
-
-            <div className="flex items-start gap-3 mt-1">
-              <div className={`p-2 rounded-lg ${isSelected ? 'bg-brand-accent/20' : 'bg-brand-border/50'}`}>
-                <Icon className={`w-5 h-5 ${isSelected ? 'text-brand-accent' : 'text-brand-muted'}`} />
+            <div className="flex items-start gap-3">
+              <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center transition-colors duration-200
+                ${isSelected
+                  ? 'bg-brand-accent/15 text-brand-accent'
+                  : 'bg-brand-elevated text-brand-muted group-hover:text-brand-text'
+                }
+              `}>
+                <Icon className="w-[18px] h-[18px]" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-medium text-brand-text">{option.name}</h3>
-                <p className="text-sm text-brand-muted mt-0.5">{option.description}</p>
+              <div className="flex-1 min-w-0 pt-0.5">
+                <h3 className={`text-[13px] font-medium ${isSelected ? 'text-brand-text' : 'text-brand-text/90'}`}>
+                  {option.name}
+                </h3>
+                <p className="text-[12px] text-brand-muted mt-0.5 leading-relaxed">{option.description}</p>
                 {option.example && (
-                  <p className="text-xs text-brand-muted/70 mt-2 italic">
+                  <p className="text-[11px] text-brand-muted/50 mt-2 italic leading-relaxed">
                     &ldquo;{option.example}&rdquo;
                   </p>
                 )}
-                {option.extra && (
-                  <p className="text-xs text-brand-muted mt-1">{option.extra}</p>
-                )}
               </div>
             </div>
+
+            {/* Selection indicator — subtle bottom bar */}
+            {isSelected && (
+              <div className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-gradient-to-r from-brand-accent to-brand-purple" />
+            )}
           </button>
         );
       })}
