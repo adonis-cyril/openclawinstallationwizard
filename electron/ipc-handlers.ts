@@ -88,7 +88,7 @@ export function registerIpcHandlers(): void {
             '-H', `x-api-key: ${key}`,
             '-H', 'content-type: application/json',
             '-H', 'anthropic-version: 2023-06-01',
-            '-d', '{"model":"claude-haiku-4-5-20251001","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}',
+            '-d', '{"model":"claude-3-haiku-20240307","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}',
             'https://api.anthropic.com/v1/messages',
           ];
           break;
