@@ -189,12 +189,20 @@ export function registerIpcHandlers(): void {
             if (win) win.webContents.send('install-progress', { step: label, status: 'complete' });
           }
           // Restart to pick up any new config (channels, hooks, etc.)
+          // Try restart first, fall back to stop+start
           try {
             await streamCommand('openclaw gateway restart', (stream, text) => {
               if (win) win.webContents.send('command-output', { stream, text });
             }, { timeoutMs: 15000 });
           } catch {
-            // Restart is best-effort — gateway is already running
+            try {
+              await runCommand('openclaw gateway stop');
+              await streamCommand('openclaw gateway start', (stream, text) => {
+                if (win) win.webContents.send('command-output', { stream, text });
+              }, { timeoutMs: 15000, detached: true });
+            } catch {
+              // Best-effort — gateway may still be running with old config
+            }
           }
 
           // Retrieve existing token
@@ -281,6 +289,47 @@ export function registerIpcHandlers(): void {
       return { token: null, error: 'No token found' };
     } catch (error) {
       return { token: null, error: (error as Error).message };
+    }
+  });
+
+  ipcMain.handle('full-reset', async () => {
+    const win = getMainWindow();
+    try {
+      // Stop the gateway if running
+      try {
+        if (win) win.webContents.send('command-output', { stream: 'stdout', text: 'Stopping gateway...\n' });
+        await runCommand('openclaw gateway stop');
+      } catch { /* may not be running */ }
+
+      // Remove the daemon
+      try {
+        if (win) win.webContents.send('command-output', { stream: 'stdout', text: 'Removing daemon...\n' });
+        await runCommand('openclaw daemon uninstall');
+      } catch { /* may not be installed */ }
+
+      // Uninstall OpenClaw globally
+      if (win) win.webContents.send('command-output', { stream: 'stdout', text: 'Uninstalling OpenClaw...\n' });
+      await streamCommand('npm uninstall -g openclaw', (stream, text) => {
+        if (win) win.webContents.send('command-output', { stream, text });
+      }, { timeoutMs: 60000 });
+
+      // Clear OpenClaw config directory
+      try {
+        const homeDir = os.homedir();
+        const configDir = `${homeDir}/.openclaw`;
+        await runCommand(`rm -rf "${configDir}"`);
+        if (win) win.webContents.send('command-output', { stream: 'stdout', text: 'Cleared OpenClaw configuration.\n' });
+      } catch { /* config dir may not exist */ }
+
+      // Clear wizard state
+      try {
+        const homeDir = os.homedir();
+        await runCommand(`rm -rf "${homeDir}/.openclaw-wizard"`);
+      } catch { /* state dir may not exist */ }
+
+      return { success: true };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
     }
   });
 

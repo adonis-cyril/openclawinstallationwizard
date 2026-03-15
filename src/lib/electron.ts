@@ -18,6 +18,7 @@ export interface ElectronAPI {
   healthCheck: () => Promise<{ healthy: boolean; error?: string }>;
   getGatewayToken: () => Promise<{ token: string | null; error?: string }>;
   restartGateway: () => Promise<{ success: boolean; error?: string }>;
+  fullReset: () => Promise<{ success: boolean; error?: string }>;
   saveState: (state: Record<string, unknown>) => Promise<void>;
   loadState: () => Promise<Record<string, unknown> | null>;
   onCommandOutput: (callback: (data: { stream: string; text: string }) => void) => () => void;
@@ -76,6 +77,10 @@ export function getMockAPI(): ElectronAPI {
     },
     restartGateway: async () => {
       await new Promise((r) => setTimeout(r, 1000));
+      return { success: true };
+    },
+    fullReset: async () => {
+      await new Promise((r) => setTimeout(r, 2000));
       return { success: true };
     },
     saveState: async () => {},

@@ -8,7 +8,7 @@ import { PROVIDERS } from '@/data/providers';
 import { SKILLS } from '@/data/skills';
 import { HOOKS } from '@/data/hooks';
 import { CHANNELS } from '@/data/channels';
-import { PartyPopper, ExternalLink, MessageSquare, BookOpen, Users, RotateCcw } from 'lucide-react';
+import { PartyPopper, ExternalLink, MessageSquare, BookOpen, Users } from 'lucide-react';
 
 const LINK_COLORS = [
   'bg-brand-accent/10 text-brand-accent',
@@ -20,7 +20,7 @@ const LINK_COLORS = [
 export default function CompletionStep() {
   const {
     selectedProvider, selectedModel, selectedSkills,
-    selectedHooks, selectedChannels, gatewayToken, setGatewayToken, resetWizard,
+    selectedHooks, selectedChannels, gatewayToken, setGatewayToken,
   } = useWizardStore();
 
   // Fetch gateway token on mount if not already available
@@ -113,16 +113,7 @@ export default function CompletionStep() {
         />
       </div>
 
-      {/* Start over */}
-      <div className="text-center">
-        <button
-          onClick={resetWizard}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-brand-muted hover:text-brand-text hover:bg-brand-surface transition-all text-[13px]"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          Start Over
-        </button>
-      </div>
+      {/* Reset is available via the reset icon in the bottom bar */}
     </StepContainer>
   );
 }

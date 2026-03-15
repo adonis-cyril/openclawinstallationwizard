@@ -3,6 +3,7 @@
 import { STEPS } from '@/data/steps';
 import { useWizardStore } from '@/lib/store';
 import { Check } from 'lucide-react';
+import ClawLogo from '@/components/ClawLogo';
 
 export default function Stepper() {
   const { currentStep, completedSteps, goToStep } = useWizardStore();
@@ -12,9 +13,7 @@ export default function Stepper() {
       {/* Logo */}
       <div className="px-6 pt-8 pb-10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-brand-dark flex items-center justify-center">
-            <span className="text-brand-bg text-sm font-bold font-serif">OC</span>
-          </div>
+          <ClawLogo size={36} />
           <div>
             <h1 className="text-[15px] font-serif font-semibold text-brand-text tracking-tight">OpenClaw</h1>
             <p className="text-[11px] text-brand-muted -mt-0.5">Setup Wizard</p>
