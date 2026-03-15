@@ -73,7 +73,15 @@ export function getMockAPI(): ElectronAPI {
       return { healthy: true };
     },
     getGatewayToken: async () => {
-      return { token: 'mock-token-abc123' };
+      const envToken = process.env.NEXT_PUBLIC_OPENCLAW_GATEWAY_TOKEN?.trim();
+      if (envToken) return { token: envToken };
+
+      if (typeof window !== 'undefined') {
+        const stored = window.localStorage.getItem('openclaw_gateway_token')?.trim();
+        if (stored) return { token: stored };
+      }
+
+      return { token: null, error: 'No token available in browser preview mode' };
     },
     restartGateway: async () => {
       await new Promise((r) => setTimeout(r, 1000));

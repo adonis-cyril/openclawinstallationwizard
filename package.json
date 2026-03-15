@@ -5,8 +5,8 @@
   "main": "electron/dist/main.js",
   "private": true,
   "scripts": {
-    "dev": "concurrently -k \"next dev\" \"npm run electron:dev\"",
-    "next:dev": "next dev",
+    "dev": "concurrently -k \"npm run next:dev\" \"npm run electron:dev\"",
+    "next:dev": "next dev -p 3000",
     "build": "next build && npm run electron:build",
     "start": "npm run build && electron .",
     "electron:dev": "tsc -p electron/tsconfig.json && NODE_ENV=development electron .",

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import StepContainer from '@/components/StepContainer';
 import { useWizardStore } from '@/lib/store';
 import { getAPI } from '@/lib/electron';
@@ -20,8 +20,11 @@ const LINK_COLORS = [
 export default function CompletionStep() {
   const {
     selectedProvider, selectedModel, selectedSkills,
-    selectedHooks, selectedChannels, gatewayToken, setGatewayToken,
+    selectedHooks, selectedChannels, gatewayToken, gatewayPort, setGatewayToken,
   } = useWizardStore();
+  const [manualToken, setManualToken] = useState('');
+  const [fetchingToken, setFetchingToken] = useState(false);
+  const [tokenMessage, setTokenMessage] = useState<string | null>(null);
 
   // Fetch gateway token on mount if not already available
   useEffect(() => {
@@ -40,12 +43,76 @@ export default function CompletionStep() {
 
   // Build tokenized dashboard URL
   const dashboardUrl = gatewayToken
-    ? `http://localhost:18789?token=${encodeURIComponent(gatewayToken)}`
-    : 'http://localhost:18789';
+    ? `http://127.0.0.1:${gatewayPort}/#token=${encodeURIComponent(gatewayToken)}`
+    : `http://127.0.0.1:${gatewayPort}`;
 
   // Determine test message guidance based on selected channels
   const firstChannel = activeChannelEntries[0]?.[0];
   const testMessageInfo = getTestMessageInfo(firstChannel, dashboardUrl);
+  const isElectronRuntime = typeof window !== 'undefined' && !!window.electronAPI;
+
+  const normalizeGatewayToken = (input: string): string => {
+    const raw = input.trim();
+    if (!raw) return '';
+
+    try {
+      const url = new URL(raw);
+      const hash = url.hash.startsWith('#') ? url.hash.slice(1) : url.hash;
+      const fromHash = new URLSearchParams(hash).get('token');
+      if (fromHash) return fromHash.trim();
+      const fromQuery = url.searchParams.get('token');
+      if (fromQuery) return fromQuery.trim();
+      return raw;
+    } catch {
+      const fromPattern = raw.match(/(?:^|[?#&])token=([^&#\s]+)/i);
+      if (fromPattern?.[1]) return decodeURIComponent(fromPattern[1]).trim();
+      return raw;
+    }
+  };
+
+  const saveManualToken = () => {
+    const cleaned = normalizeGatewayToken(manualToken);
+    if (!cleaned) return;
+    setGatewayToken(cleaned);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('openclaw_gateway_token', cleaned);
+    }
+    setTokenMessage('Token saved. Click Open Dashboard.');
+  };
+
+  const fetchTokenAutomatically = async () => {
+    setFetchingToken(true);
+    setTokenMessage(null);
+    try {
+      const api = getAPI();
+      const result = await api.getGatewayToken();
+      if (!result.token) {
+        setTokenMessage(result.error || 'Could not fetch token automatically.');
+        return;
+      }
+
+      setGatewayToken(result.token);
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('openclaw_gateway_token', result.token);
+      }
+
+      const tokenizedUrl = `http://127.0.0.1:${gatewayPort}/#token=${encodeURIComponent(result.token)}`;
+      try {
+        if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+          await navigator.clipboard.writeText(tokenizedUrl);
+          setTokenMessage('Token fetched and dashboard URL copied to clipboard.');
+        } else {
+          setTokenMessage('Token fetched. Clipboard unavailable, but Open Dashboard now works.');
+        }
+      } catch {
+        setTokenMessage('Token fetched. Clipboard permission denied, but Open Dashboard now works.');
+      }
+    } catch (error) {
+      setTokenMessage((error as Error).message || 'Could not fetch token automatically.');
+    } finally {
+      setFetchingToken(false);
+    }
+  };
 
   return (
     <StepContainer
@@ -112,6 +179,60 @@ export default function CompletionStep() {
           colorClass={LINK_COLORS[3]}
         />
       </div>
+
+      {!gatewayToken && (
+        <div className="rounded-xl border border-brand-warning/30 bg-brand-warning/10 px-4 py-3 mb-8">
+          <p className="text-[13px] font-medium text-brand-text">Dashboard token not found</p>
+          <p className="text-[12px] text-brand-muted mt-1">
+            {isElectronRuntime
+              ? 'The wizard could not read your gateway token yet. Try restarting the gateway, then open dashboard again.'
+              : 'Browser preview mode detected. Generate a tokenized URL with `openclaw dashboard --no-open` and open that URL.'}
+          </p>
+          {isElectronRuntime && (
+            <div className="mt-3 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={fetchTokenAutomatically}
+                disabled={fetchingToken}
+                className={`px-3 py-2 rounded-md text-[12px] font-medium ${
+                  fetchingToken
+                    ? 'bg-brand-border text-brand-muted cursor-not-allowed'
+                    : 'btn-primary'
+                }`}
+              >
+                {fetchingToken ? 'Fetching token...' : 'Auto-fetch token'}
+              </button>
+              <span className="text-[11px] text-brand-muted">Runs in-app and copies dashboard URL</span>
+            </div>
+          )}
+          {!isElectronRuntime && (
+            <div className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={manualToken}
+                onChange={(e) => setManualToken(e.target.value)}
+                placeholder="Paste gateway token"
+                className="flex-1 rounded-md border border-brand-border bg-brand-surface px-3 py-2 text-[12px] text-brand-text placeholder:text-brand-muted focus:outline-none focus:ring-1 focus:ring-brand-accent"
+              />
+              <button
+                type="button"
+                onClick={saveManualToken}
+                disabled={!manualToken.trim()}
+                className={`px-3 py-2 rounded-md text-[12px] font-medium ${
+                  manualToken.trim()
+                    ? 'btn-primary'
+                    : 'bg-brand-border text-brand-muted cursor-not-allowed'
+                }`}
+              >
+                Use token
+              </button>
+            </div>
+          )}
+          {tokenMessage && (
+            <p className="text-[11px] text-brand-muted mt-2">{tokenMessage}</p>
+          )}
+        </div>
+      )}
 
       {/* Reset is available via the reset icon in the bottom bar */}
     </StepContainer>

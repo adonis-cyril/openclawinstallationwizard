@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useWizardStore } from '@/lib/store';
 import { getAPI } from '@/lib/electron';
 import { ArrowLeft, ArrowRight, RotateCcw } from 'lucide-react';
@@ -29,6 +29,11 @@ export default function StepContainer({
   const { currentStep, prevStep, nextStep, resetCurrentStep, resetWizard } = useWizardStore();
   const [showResetMenu, setShowResetMenu] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [isElectronRuntime, setIsElectronRuntime] = useState(true);
+
+  useEffect(() => {
+    setIsElectronRuntime(typeof window !== 'undefined' && !!window.electronAPI);
+  }, []);
 
   const handleNext = () => {
     if (onNext) onNext();
@@ -68,6 +73,14 @@ export default function StepContainer({
 
       <div className="flex-1 overflow-y-auto px-10 py-12 pb-28">
         <div className="max-w-2xl mx-auto animate-slide-up">
+          {!isElectronRuntime && (
+            <div className="mb-6 rounded-xl border border-brand-warning/30 bg-brand-warning/10 px-4 py-3">
+              <p className="text-[13px] font-medium text-brand-text">Browser preview mode</p>
+              <p className="text-[12px] text-brand-muted mt-1">
+                Electron is not connected, so setup actions use mock responses. Open Dashboard token links will not fully work here.
+              </p>
+            </div>
+          )}
           {title && (
             <div className="mb-10">
               <h2 className="text-2xl font-serif font-semibold text-brand-text tracking-tight leading-tight">{title}</h2>
