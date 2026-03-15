@@ -188,7 +188,13 @@ export function registerIpcHandlers(): void {
           for (const label of labels) {
             if (win) win.webContents.send('install-progress', { step: label, status: 'complete' });
           }
-          return { success: true };
+          // Try to retrieve existing token
+          let token: string | undefined;
+          try {
+            const tokenResult = await runCommand('openclaw gateway token show');
+            token = tokenResult.stdout.trim() || undefined;
+          } catch { /* token retrieval is best-effort */ }
+          return { success: true, token };
         }
       } catch {
         // Not running, proceed with setup
@@ -235,7 +241,14 @@ export function registerIpcHandlers(): void {
         }
       }
 
-      return { success: true };
+      // Retrieve the generated token
+      let token: string | undefined;
+      try {
+        const tokenResult = await runCommand('openclaw gateway token show');
+        token = tokenResult.stdout.trim() || undefined;
+      } catch { /* token retrieval is best-effort */ }
+
+      return { success: true, token };
     } catch (error) {
       return { success: false, error: (error as Error).message };
     }

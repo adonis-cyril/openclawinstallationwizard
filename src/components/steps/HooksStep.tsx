@@ -52,9 +52,12 @@ export default function HooksStep() {
                 ${isSelected ? 'border-brand-accent bg-brand-accent/5' : 'border-brand-border bg-brand-surface'}
               `}
             >
-              <button
+              <div
+                role="button"
+                tabIndex={0}
                 onClick={() => toggleHook(hook.id)}
-                className="w-full text-left p-5 flex items-start gap-3"
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHook(hook.id); } }}
+                className="w-full text-left p-5 flex items-start gap-3 cursor-pointer"
               >
                 <span className={`flex-shrink-0 w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition-all
                   ${isSelected ? 'border-brand-accent bg-brand-accent' : 'border-brand-border'}
@@ -86,7 +89,7 @@ export default function HooksStep() {
                 >
                   {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
-              </button>
+              </div>
 
               {isExpanded && (
                 <div className="px-5 pb-5 border-t border-brand-border/50 pt-4 animate-slide-up">

@@ -18,14 +18,22 @@ const LINK_COLORS = [
 export default function CompletionStep() {
   const {
     selectedProvider, selectedModel, selectedSkills,
-    selectedHooks, selectedChannels, resetWizard,
+    selectedHooks, selectedChannels, gatewayToken, resetWizard,
   } = useWizardStore();
 
   const provider = PROVIDERS.find((p) => p.id === selectedProvider);
   const model = provider?.models.find((m) => m.id === selectedModel);
-  const activeChannels = Object.entries(selectedChannels)
-    .filter(([, c]) => c.enabled)
-    .map(([id]) => CHANNELS.find((c) => c.id === id)?.name || id);
+  const activeChannelEntries = Object.entries(selectedChannels).filter(([, c]) => c.enabled);
+  const activeChannels = activeChannelEntries.map(([id]) => CHANNELS.find((c) => c.id === id)?.name || id);
+
+  // Build tokenized dashboard URL
+  const dashboardUrl = gatewayToken
+    ? `http://localhost:18789?token=${encodeURIComponent(gatewayToken)}`
+    : 'http://localhost:18789';
+
+  // Determine test message guidance based on selected channels
+  const firstChannel = activeChannelEntries[0]?.[0];
+  const testMessageInfo = getTestMessageInfo(firstChannel, dashboardUrl);
 
   return (
     <StepContainer
@@ -67,14 +75,14 @@ export default function CompletionStep() {
           icon={ExternalLink}
           title="Open Dashboard"
           description="Open the Control UI in your browser"
-          href="http://localhost:18789"
+          href={dashboardUrl}
           colorClass={LINK_COLORS[0]}
         />
         <QuickLink
           icon={MessageSquare}
-          title="Send a Test Message"
-          description="Try chatting with your assistant"
-          href="#"
+          title={testMessageInfo.title}
+          description={testMessageInfo.description}
+          href={testMessageInfo.href}
           colorClass={LINK_COLORS[1]}
         />
         <QuickLink
@@ -114,6 +122,41 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
       <span className="text-brand-text font-medium truncate">{value}</span>
     </div>
   );
+}
+
+function getTestMessageInfo(channelId: string | undefined, dashboardUrl: string) {
+  switch (channelId) {
+    case 'telegram':
+      return {
+        title: 'Open Telegram',
+        description: 'Find your bot in Telegram and send a message',
+        href: 'https://telegram.org',
+      };
+    case 'whatsapp':
+      return {
+        title: 'Open WhatsApp',
+        description: 'Your assistant is linked — send it a message',
+        href: 'https://web.whatsapp.com',
+      };
+    case 'discord':
+      return {
+        title: 'Open Discord',
+        description: 'Message your bot in your Discord server',
+        href: 'https://discord.com/app',
+      };
+    case 'webchat':
+      return {
+        title: 'Open Web Chat',
+        description: 'Chat with your assistant in the dashboard',
+        href: dashboardUrl,
+      };
+    default:
+      return {
+        title: 'Open Web Chat',
+        description: 'Chat with your assistant in the dashboard',
+        href: dashboardUrl,
+      };
+  }
 }
 
 function QuickLink({
