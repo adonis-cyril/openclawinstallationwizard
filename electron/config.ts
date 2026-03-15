@@ -11,7 +11,7 @@ export function buildConfigCommand(config: Record<string, unknown>): string {
   // For the onboard command, these are passed as arguments to openclaw CLI
   // which does NOT go through a shell (see runCommandWithArgs usage).
   const parts = [
-    'openclaw onboard --non-interactive',
+    'openclaw onboard --non-interactive --accept-risk',
     '--mode local',
     '--auth-choice apiKey',
     `--gateway-port ${port}`,
@@ -64,6 +64,10 @@ export async function configureChannels(
         args.push('--set', `${safeKey}=${value}`);
       }
       args.push('--set', 'enabled=true');
+      // For Telegram, set groupPolicy to "open" so group messages aren't dropped
+      if (safeChannel === 'telegram') {
+        args.push('--set', 'groupPolicy=open');
+      }
       await runCommandWithArgs('openclaw', args);
       log(`Channel "${safeChannel}" configured successfully.\n`);
     } catch (error) {
