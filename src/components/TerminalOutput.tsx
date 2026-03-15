@@ -9,6 +9,11 @@ interface TerminalOutputProps {
   defaultOpen?: boolean;
 }
 
+// Strip ANSI escape sequences (colors, cursor movement, etc.)
+function stripAnsi(text: string): string {
+  return text.replace(/\x1B\[[0-9;]*[A-Za-z]|\x1B\][^\x07]*\x07/g, '');
+}
+
 export default function TerminalOutput({ title = 'Terminal Output', defaultOpen = false }: TerminalOutputProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [copied, setCopied] = useState(false);
@@ -16,7 +21,7 @@ export default function TerminalOutput({ title = 'Terminal Output', defaultOpen 
   const { terminalOutput } = useWizardStore();
 
   const handleCopy = async () => {
-    const markdown = '```\n' + terminalOutput.join('') + '\n```';
+    const markdown = '```\n' + stripAnsi(terminalOutput.join('')) + '\n```';
     try {
       await navigator.clipboard.writeText(markdown);
       setCopied(true);
@@ -79,7 +84,7 @@ export default function TerminalOutput({ title = 'Terminal Output', defaultOpen 
         <div className="bg-brand-dark p-4 max-h-64 overflow-y-auto font-mono text-[11px] leading-relaxed">
           {terminalOutput.map((line, i) => (
             <div key={i} className="text-amber-200/80 whitespace-pre-wrap break-all">
-              {line}
+              {stripAnsi(line)}
             </div>
           ))}
           <div ref={bottomRef} />
