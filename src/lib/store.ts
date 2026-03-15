@@ -39,6 +39,7 @@ export interface WizardState {
   // Gateway
   gatewayPort: number;
   gatewayStarted: boolean;
+  gatewayToken: string | null;
 
   // Terminal output
   terminalOutput: string[];
@@ -61,6 +62,7 @@ export interface WizardState {
   setSelectedHooks: (hooks: string[]) => void;
   setGatewayPort: (port: number) => void;
   setGatewayStarted: (started: boolean) => void;
+  setGatewayToken: (token: string | null) => void;
   appendTerminalOutput: (text: string) => void;
   clearTerminalOutput: () => void;
   goToStep: (step: number) => void;
@@ -87,6 +89,7 @@ const initialState = {
   selectedHooks: [] as string[],
   gatewayPort: 18789,
   gatewayStarted: false,
+  gatewayToken: null as string | null,
   terminalOutput: [] as string[],
 };
 
@@ -156,6 +159,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setGatewayPort: (port) => set({ gatewayPort: port }),
 
   setGatewayStarted: (started) => set({ gatewayStarted: started }),
+  setGatewayToken: (token) => set({ gatewayToken: token }),
 
   appendTerminalOutput: (text) =>
     set((state) => ({
@@ -202,6 +206,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       selectedHooks: (saved.selectedHooks as string[]) ?? [],
       gatewayPort: (saved.gatewayPort as number) ?? 18789,
       gatewayStarted: (saved.gatewayStarted as boolean) ?? false,
+      gatewayToken: (saved.gatewayToken as string) ?? null,
     });
   },
 
@@ -221,6 +226,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       selectedHooks: state.selectedHooks,
       gatewayPort: state.gatewayPort,
       gatewayStarted: state.gatewayStarted,
+      gatewayToken: state.gatewayToken,
     };
   },
 }));

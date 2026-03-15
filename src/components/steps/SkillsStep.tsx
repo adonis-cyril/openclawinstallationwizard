@@ -64,9 +64,12 @@ export default function SkillsStep() {
                       ${isSelected ? 'border-brand-accent/50 bg-brand-accent/5' : 'border-brand-border bg-brand-surface'}
                     `}
                   >
-                    <button
+                    <div
+                      role="button"
+                      tabIndex={0}
                       onClick={() => toggleSkill(skill.id)}
-                      className="w-full text-left p-4 flex items-center gap-3"
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSkill(skill.id); } }}
+                      className="w-full text-left p-4 flex items-center gap-3 cursor-pointer"
                     >
                       <span className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all
                         ${isSelected ? 'border-brand-accent bg-brand-accent' : 'border-brand-border'}
@@ -97,7 +100,7 @@ export default function SkillsStep() {
                       >
                         {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                       </button>
-                    </button>
+                    </div>
 
                     {isExpanded && (
                       <div className="px-4 pb-4 pt-0 text-sm text-brand-muted border-t border-brand-border/50 mt-0 pt-3 animate-slide-up">

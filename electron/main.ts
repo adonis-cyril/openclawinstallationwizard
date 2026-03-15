@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, shell } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 import { registerIpcHandlers } from './ipc-handlers';
@@ -46,6 +46,14 @@ async function createWindow(): Promise<void> {
     },
   });
 
+  // Open external links in system browser instead of new Electron windows
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      shell.openExternal(url);
+    }
+    return { action: 'deny' };
+  });
+
   if (isDev) {
     // Wait for Next.js dev server to be ready
     const devUrl = 'http://localhost:3000';
@@ -58,7 +66,7 @@ async function createWindow(): Promise<void> {
       console.error('Dev server did not start in time');
       mainWindow.loadURL(`data:text/html,<html><body style="background:#F5F0E8;color:#1A1A1A;font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0"><div style="text-align:center"><h1>Waiting for dev server...</h1><p>Run <code>npm run next:dev</code> first, then restart Electron.</p></div></body></html>`);
     }
-    mainWindow.webContents.openDevTools();
+    // DevTools can be opened manually with Cmd+Option+I / Ctrl+Shift+I
   } else {
     mainWindow.loadFile(path.join(PROJECT_ROOT, 'out', 'index.html'));
   }

@@ -16,7 +16,7 @@ interface GatewayStatus {
 }
 
 export default function GatewayStep() {
-  const { appendTerminalOutput, clearTerminalOutput, setGatewayStarted, nextStep } = useWizardStore();
+  const { appendTerminalOutput, clearTerminalOutput, setGatewayStarted, setGatewayToken, nextStep } = useWizardStore();
   const [steps, setSteps] = useState<GatewayStatus[]>([
     { label: 'Setting up security token...', status: 'pending' },
     { label: 'Configuring gateway on port 18789...', status: 'pending' },
@@ -100,6 +100,9 @@ export default function GatewayStep() {
       const result = await api.startGateway();
 
       if (result.success) {
+        // Store the gateway token if returned
+        if (result.token) setGatewayToken(result.token);
+
         // Mark all steps complete
         setSteps((prev) => prev.map((s, i) => (i < 4 ? { ...s, status: 'pass' } : s)));
 

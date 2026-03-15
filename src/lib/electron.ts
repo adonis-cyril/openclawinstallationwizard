@@ -14,7 +14,7 @@ export interface ElectronAPI {
   runInstall: () => Promise<void>;
   validateKey: (provider: string, key: string) => Promise<{ valid: boolean; error?: string }>;
   configure: (config: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>;
-  startGateway: () => Promise<{ success: boolean; error?: string }>;
+  startGateway: () => Promise<{ success: boolean; error?: string; token?: string }>;
   healthCheck: () => Promise<{ healthy: boolean; error?: string }>;
   saveState: (state: Record<string, unknown>) => Promise<void>;
   loadState: () => Promise<Record<string, unknown> | null>;
