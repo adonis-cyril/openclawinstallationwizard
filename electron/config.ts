@@ -9,7 +9,6 @@ import { sanitizeIdentifier, sanitizePort } from './commands';
 export function buildConfigArgs(config: Record<string, unknown>): { binary: string; args: string[] } {
   const provider = sanitizeIdentifier((config.selectedProvider || config.provider) as string);
   const apiKey = config.apiKey as string;
-  const model = (config.selectedModel || config.model) as string;
   const port = sanitizePort((config.gatewayPort as number) || 18789);
 
   const args = [
@@ -24,13 +23,10 @@ export function buildConfigArgs(config: Record<string, unknown>): { binary: stri
 
   if (provider === 'anthropic') {
     args.push('--anthropic-api-key', apiKey);
-    if (model) args.push('--model', sanitizeIdentifier(model));
   } else if (provider === 'openai') {
     args.push('--openai-api-key', apiKey);
-    if (model) args.push('--model', sanitizeIdentifier(model));
   } else if (provider === 'google') {
     args.push('--google-api-key', apiKey);
-    if (model) args.push('--model', sanitizeIdentifier(model));
   }
 
   return { binary: 'openclaw', args };
