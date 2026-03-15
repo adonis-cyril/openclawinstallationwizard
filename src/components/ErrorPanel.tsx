@@ -45,7 +45,7 @@ export default function ErrorPanel({
             {onSkip && (
               <button
                 onClick={onSkip}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/5 text-brand-muted text-sm transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-bg text-brand-muted text-sm transition-colors"
               >
                 <SkipForward className="w-4 h-4" />
                 Skip This Step
@@ -54,7 +54,7 @@ export default function ErrorPanel({
             {onShowTerminal && (
               <button
                 onClick={onShowTerminal}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/5 text-brand-muted text-sm transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-bg text-brand-muted text-sm transition-colors"
               >
                 View Terminal Output
               </button>
@@ -63,7 +63,7 @@ export default function ErrorPanel({
               href="https://discord.gg/openclaw"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-white/5 text-brand-muted text-sm transition-colors ml-auto"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-brand-bg text-brand-muted text-sm transition-colors ml-auto"
             >
               <ExternalLink className="w-4 h-4" />
               Get Help

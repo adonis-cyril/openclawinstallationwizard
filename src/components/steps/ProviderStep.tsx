@@ -77,7 +77,7 @@ export default function ProviderStep() {
             )}
             {selectedProvider === provider.id && (
               <span className="absolute top-3 left-3 w-5 h-5 rounded-full bg-brand-accent flex items-center justify-center">
-                <Check className="w-3 h-3 text-white" />
+                <Check className="w-3 h-3 text-brand-bg" />
               </span>
             )}
             <h3 className="font-medium text-brand-text mt-1">{provider.name}</h3>
