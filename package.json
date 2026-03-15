@@ -5,11 +5,13 @@
   "main": "electron/dist/main.js",
   "private": true,
   "scripts": {
-    "dev": "concurrently \"next dev\" \"npm run electron:dev\"",
-    "build": "next build",
-    "electron:dev": "tsc -p electron/tsconfig.json && electron .",
+    "dev": "concurrently -k \"next dev\" \"npm run electron:dev\"",
+    "next:dev": "next dev",
+    "build": "next build && npm run electron:build",
+    "start": "npm run build && electron .",
+    "electron:dev": "tsc -p electron/tsconfig.json && NODE_ENV=development electron .",
     "electron:build": "tsc -p electron/tsconfig.json",
-    "package": "npm run build && npm run electron:build && electron-builder",
+    "package": "npm run build && electron-builder",
     "package:mac": "npm run package -- --mac",
     "package:win": "npm run package -- --win"
   },
