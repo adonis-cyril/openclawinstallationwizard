@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
 import StepContainer from '@/components/StepContainer';
 import { useWizardStore } from '@/lib/store';
+import { getAPI } from '@/lib/electron';
 import { PROVIDERS } from '@/data/providers';
 import { SKILLS } from '@/data/skills';
 import { HOOKS } from '@/data/hooks';
@@ -18,8 +20,18 @@ const LINK_COLORS = [
 export default function CompletionStep() {
   const {
     selectedProvider, selectedModel, selectedSkills,
-    selectedHooks, selectedChannels, gatewayToken, resetWizard,
+    selectedHooks, selectedChannels, gatewayToken, setGatewayToken, resetWizard,
   } = useWizardStore();
+
+  // Fetch gateway token on mount if not already available
+  useEffect(() => {
+    if (!gatewayToken) {
+      const api = getAPI();
+      api.getGatewayToken().then((result) => {
+        if (result.token) setGatewayToken(result.token);
+      }).catch(() => { /* best effort */ });
+    }
+  }, [gatewayToken, setGatewayToken]);
 
   const provider = PROVIDERS.find((p) => p.id === selectedProvider);
   const model = provider?.models.find((m) => m.id === selectedModel);

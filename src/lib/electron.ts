@@ -16,6 +16,8 @@ export interface ElectronAPI {
   configure: (config: Record<string, unknown>) => Promise<{ success: boolean; error?: string }>;
   startGateway: () => Promise<{ success: boolean; error?: string; token?: string }>;
   healthCheck: () => Promise<{ healthy: boolean; error?: string }>;
+  getGatewayToken: () => Promise<{ token: string | null; error?: string }>;
+  restartGateway: () => Promise<{ success: boolean; error?: string }>;
   saveState: (state: Record<string, unknown>) => Promise<void>;
   loadState: () => Promise<Record<string, unknown> | null>;
   onCommandOutput: (callback: (data: { stream: string; text: string }) => void) => () => void;
@@ -68,6 +70,13 @@ export function getMockAPI(): ElectronAPI {
     healthCheck: async () => {
       await new Promise((r) => setTimeout(r, 500));
       return { healthy: true };
+    },
+    getGatewayToken: async () => {
+      return { token: 'mock-token-abc123' };
+    },
+    restartGateway: async () => {
+      await new Promise((r) => setTimeout(r, 1000));
+      return { success: true };
     },
     saveState: async () => {},
     loadState: async () => null,
