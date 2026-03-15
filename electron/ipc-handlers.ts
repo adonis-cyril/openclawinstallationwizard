@@ -11,6 +11,22 @@ function getMainWindow(): BrowserWindow | null {
   return windows.length > 0 ? windows[0] : null;
 }
 
+async function getGatewayTokenFromDashboardUrl(): Promise<string | undefined> {
+  const result = await runCommand('openclaw dashboard --no-open');
+  const output = result.stdout || '';
+
+  const urlMatch = output.match(/Dashboard URL:\s*(\S+)/i) || output.match(/(https?:\/\/\S+)/i);
+  if (!urlMatch) return undefined;
+
+  try {
+    const url = new URL(urlMatch[1].trim());
+    const hashParams = new URLSearchParams(url.hash.startsWith('#') ? url.hash.slice(1) : url.hash);
+    return hashParams.get('token') || url.searchParams.get('token') || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 export function registerIpcHandlers(): void {
   ipcMain.handle('get-platform', () => {
     return process.platform;
@@ -208,8 +224,7 @@ export function registerIpcHandlers(): void {
           // Retrieve existing token
           let token: string | undefined;
           try {
-            const tokenResult = await runCommand('openclaw gateway token show');
-            token = tokenResult.stdout.trim() || undefined;
+            token = await getGatewayTokenFromDashboardUrl();
           } catch { /* token retrieval is best-effort */ }
           return { success: true, token };
         }
@@ -261,8 +276,7 @@ export function registerIpcHandlers(): void {
       // Retrieve the generated token
       let token: string | undefined;
       try {
-        const tokenResult = await runCommand('openclaw gateway token show');
-        token = tokenResult.stdout.trim() || undefined;
+        token = await getGatewayTokenFromDashboardUrl();
       } catch { /* token retrieval is best-effort */ }
 
       return { success: true, token };
@@ -283,8 +297,7 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('get-gateway-token', async () => {
     try {
-      const result = await runCommand('openclaw gateway token show');
-      const token = result.stdout.trim();
+      const token = await getGatewayTokenFromDashboardUrl();
       if (token) return { token };
       return { token: null, error: 'No token found' };
     } catch (error) {
