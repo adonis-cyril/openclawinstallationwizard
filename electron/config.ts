@@ -71,9 +71,8 @@ export async function configureChannels(
         }
         await runCommandWithArgs('openclaw', ['channels', 'add', '--channel', safeChannel, '--token', token]);
 
-        // Telegram dashboard expects raw mode in current OpenClaw builds.
+        // Telegram group handling should be open so group messages are not dropped.
         if (safeChannel === 'telegram') {
-          await runCommandWithArgs('openclaw', ['config', 'set', 'channels.telegram.type', 'raw']);
           await runCommandWithArgs('openclaw', ['config', 'set', 'channels.telegram.groupPolicy', 'open']);
         }
       } else if (safeChannel === 'whatsapp') {
