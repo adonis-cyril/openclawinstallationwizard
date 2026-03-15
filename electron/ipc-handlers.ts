@@ -25,7 +25,7 @@ export function registerIpcHandlers(): void {
     if (!win) throw new Error('No window available');
 
     const steps = [
-      { id: 'download', label: 'Downloading OpenClaw package', cmd: 'npm install -g openclaw@latest' },
+      { id: 'download', label: 'Downloading OpenClaw package', cmd: 'npm install -g --force openclaw@latest' },
     ];
 
     for (const step of steps) {
