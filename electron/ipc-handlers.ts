@@ -141,7 +141,7 @@ export function registerIpcHandlers(): void {
       }
 
       // Install skills
-      const skills = config.skills as string[] | undefined;
+      const skills = (config.selectedSkills || config.skills) as string[] | undefined;
       if (skills && skills.length > 0) {
         await installSkills(skills, (text) => {
           if (win) win.webContents.send('command-output', { stream: 'stdout', text });
@@ -149,7 +149,7 @@ export function registerIpcHandlers(): void {
       }
 
       // Configure channels
-      const channels = config.channels as Record<string, Record<string, string>> | undefined;
+      const channels = (config.selectedChannels || config.channels) as Record<string, Record<string, string>> | undefined;
       if (channels) {
         await configureChannels(channels, (text) => {
           if (win) win.webContents.send('command-output', { stream: 'stdout', text });
@@ -157,7 +157,7 @@ export function registerIpcHandlers(): void {
       }
 
       // Configure hooks
-      const hooks = config.hooks as string[] | undefined;
+      const hooks = (config.selectedHooks || config.hooks) as string[] | undefined;
       if (hooks && hooks.length > 0) {
         await configureHooks(hooks, (text) => {
           if (win) win.webContents.send('command-output', { stream: 'stdout', text });

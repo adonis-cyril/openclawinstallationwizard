@@ -145,9 +145,9 @@ export default function GatewayStep() {
     <StepContainer
       title="Start your assistant"
       subtitle={alreadyRunning ? 'Your gateway is already running' : 'Setting up the gateway and background service'}
-      nextDisabled={checking}
+      nextDisabled={!success}
       onNext={nextStep}
-      nextLabel={success ? 'Continue' : 'Skip for Now'}
+      nextLabel="Continue"
     >
       {/* Already running banner */}
       {alreadyRunning && (

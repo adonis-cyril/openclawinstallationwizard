@@ -2,9 +2,9 @@ import { runCommandWithArgs } from './commands';
 import { sanitizeIdentifier, sanitizePort } from './commands';
 
 export function buildConfigCommand(config: Record<string, unknown>): string {
-  const provider = sanitizeIdentifier(config.provider as string);
+  const provider = sanitizeIdentifier((config.selectedProvider || config.provider) as string);
   const apiKey = config.apiKey as string;
-  const model = config.model as string;
+  const model = (config.selectedModel || config.model) as string;
   const port = sanitizePort((config.gatewayPort as number) || 18789);
 
   // Note: apiKey and model are passed via environment or --stdin in production.
