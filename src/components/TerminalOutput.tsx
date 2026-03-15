@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Copy, Check } from 'lucide-react';
 import { useWizardStore } from '@/lib/store';
 
 interface TerminalOutputProps {
@@ -11,8 +11,28 @@ interface TerminalOutputProps {
 
 export default function TerminalOutput({ title = 'Terminal Output', defaultOpen = false }: TerminalOutputProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [copied, setCopied] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const { terminalOutput } = useWizardStore();
+
+  const handleCopy = async () => {
+    const markdown = '```\n' + terminalOutput.join('') + '\n```';
+    try {
+      await navigator.clipboard.writeText(markdown);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = markdown;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   useEffect(() => {
     if (isOpen && bottomRef.current) {
@@ -44,6 +64,14 @@ export default function TerminalOutput({ title = 'Terminal Output', defaultOpen 
             {terminalOutput.length} lines
             {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
           </span>
+        </button>
+
+        <button
+          onClick={handleCopy}
+          className="p-1.5 rounded-md text-brand-muted hover:text-brand-text hover:bg-brand-bg transition-colors"
+          title="Copy output as markdown"
+        >
+          {copied ? <Check className="w-3.5 h-3.5 text-brand-success" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
       </div>
 
