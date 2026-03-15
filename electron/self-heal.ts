@@ -1,4 +1,4 @@
-import { runCommand, streamCommand } from './commands';
+import { runCommand, runCommandWithArgs, streamCommand } from './commands';
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -47,8 +47,12 @@ export async function attemptSelfHeal(
 }
 
 async function fixPath(cmd: string, log: LogFn): Promise<boolean> {
-  // Extract the binary name from the command
+  // Extract the binary name from the command and validate it
   const binary = cmd.split(' ')[0];
+  if (!/^[a-zA-Z0-9._-]+$/.test(binary)) {
+    log(`Invalid binary name: ${binary}`);
+    return false;
+  }
 
   // Common locations to search
   const searchPaths = [
@@ -72,9 +76,9 @@ async function fixPath(cmd: string, log: LogFn): Promise<boolean> {
     }
   }
 
-  // Try to find via `which` in common shells
+  // Try to find via `which` — use execFile to avoid shell injection
   try {
-    const result = await runCommand(`/bin/bash -l -c "which ${binary}"`);
+    const result = await runCommandWithArgs('/usr/bin/which', [binary]);
     if (result.exitCode === 0 && result.stdout.trim()) {
       const binDir = path.dirname(result.stdout.trim());
       log(`Found ${binary} at ${binDir}. Adding to PATH.`);
@@ -163,13 +167,17 @@ async function resolvePortConflict(log: LogFn): Promise<boolean> {
       log(`Found ${pids.length} process(es) using port 18789.`);
 
       for (const pid of pids) {
-        const processInfo = await runCommand(`ps -p ${pid.trim()} -o comm=`);
-        log(`Process ${pid.trim()}: ${processInfo.stdout.trim()}`);
+        const safePid = pid.trim();
+        if (!/^\d+$/.test(safePid)) continue;
+        const processInfo = await runCommandWithArgs('ps', ['-p', safePid, '-o', 'comm=']);
+        log(`Process ${safePid}: ${processInfo.stdout.trim()}`);
       }
 
       // Kill the processes
       for (const pid of pids) {
-        await runCommand(`kill ${pid.trim()}`);
+        const safePid = pid.trim();
+        if (!/^\d+$/.test(safePid)) continue;
+        await runCommandWithArgs('kill', [safePid]);
       }
       log('Port 18789 freed. Retrying...');
 

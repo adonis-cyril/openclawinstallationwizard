@@ -1,6 +1,6 @@
 import { ipcMain, BrowserWindow } from 'electron';
 import { runSystemCheck } from './detection';
-import { runCommand, streamCommand } from './commands';
+import { runCommand, runCommandWithArgs, streamCommand, sanitizeIdentifier, sanitizePort } from './commands';
 import { saveWizardState, loadWizardState } from './state';
 import { buildConfigCommand, installSkills, configureChannels, configureHooks } from './config';
 import { attemptSelfHeal } from './self-heal';
@@ -73,26 +73,51 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('validate-key', async (_event, provider: string, key: string) => {
+    // Validate provider is a known value
+    const validProviders = ['anthropic', 'openai', 'google', 'ollama'];
+    if (!validProviders.includes(provider)) {
+      return { valid: false, error: `Unknown provider: ${provider}` };
+    }
+
     try {
-      let cmd: string;
+      let args: string[];
       switch (provider) {
         case 'anthropic':
-          // Test with a minimal API call
-          cmd = `curl -s -o /dev/null -w "%{http_code}" -H "x-api-key: ${key}" -H "content-type: application/json" -H "anthropic-version: 2023-06-01" -d '{"model":"claude-haiku-4-5-20251001","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}' https://api.anthropic.com/v1/messages`;
+          args = [
+            '-s', '-o', '/dev/null', '-w', '%{http_code}',
+            '-H', `x-api-key: ${key}`,
+            '-H', 'content-type: application/json',
+            '-H', 'anthropic-version: 2023-06-01',
+            '-d', '{"model":"claude-haiku-4-5-20251001","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}',
+            'https://api.anthropic.com/v1/messages',
+          ];
           break;
         case 'openai':
-          cmd = `curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer ${key}" https://api.openai.com/v1/models`;
+          args = [
+            '-s', '-o', '/dev/null', '-w', '%{http_code}',
+            '-H', `Authorization: Bearer ${key}`,
+            'https://api.openai.com/v1/models',
+          ];
           break;
         case 'google':
-          cmd = `curl -s -o /dev/null -w "%{http_code}" "https://generativelanguage.googleapis.com/v1/models?key=${key}"`;
+          args = [
+            '-s', '-o', '/dev/null', '-w', '%{http_code}',
+            '-H', `x-goog-api-key: ${key}`,
+            'https://generativelanguage.googleapis.com/v1/models',
+          ];
           break;
         case 'ollama':
-          cmd = `curl -s -o /dev/null -w "%{http_code}" http://localhost:11434/api/tags`;
+          args = [
+            '-s', '-o', '/dev/null', '-w', '%{http_code}',
+            'http://localhost:11434/api/tags',
+          ];
           break;
         default:
           return { valid: false, error: `Unknown provider: ${provider}` };
       }
-      const result = await runCommand(cmd);
+
+      // Use execFile (no shell) — prevents command injection via API keys
+      const result = await runCommandWithArgs('curl', args);
       const status = parseInt(result.stdout.trim(), 10);
       if (status >= 200 && status < 300) {
         return { valid: true };

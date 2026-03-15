@@ -1,4 +1,4 @@
-import { spawn, exec } from 'child_process';
+import { spawn, exec, execFile } from 'child_process';
 import * as os from 'os';
 
 export interface CommandResult {
@@ -7,14 +7,37 @@ export interface CommandResult {
   exitCode: number;
 }
 
+/**
+ * Validate that a string contains only safe characters (alphanumeric, hyphens, underscores, dots).
+ * Use this before interpolating user input into shell commands.
+ */
+export function sanitizeIdentifier(input: string): string {
+  if (!/^[a-zA-Z0-9._-]+$/.test(input)) {
+    throw new Error(`Invalid identifier: "${input}" contains unsafe characters`);
+  }
+  return input;
+}
+
+/**
+ * Validate that a value is a safe port number.
+ */
+export function sanitizePort(port: unknown): number {
+  const num = typeof port === 'number' ? port : parseInt(String(port), 10);
+  if (!Number.isInteger(num) || num < 1 || num > 65535) {
+    throw new Error(`Invalid port number: ${port}`);
+  }
+  return num;
+}
+
+/**
+ * Run a command via shell. Only use for trusted, hardcoded commands.
+ * NEVER interpolate user input into cmd — use runCommandWithArgs instead.
+ */
 export function runCommand(cmd: string): Promise<CommandResult> {
   return new Promise((resolve, reject) => {
-    const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/bash';
-    const shellFlag = process.platform === 'win32' ? '/c' : '-c';
-
-    exec(cmd, { shell, timeout: 120000, env: getEnhancedEnv() }, (error, stdout, stderr) => {
+    exec(cmd, { shell: getShell(), timeout: 120000, env: getEnhancedEnv() }, (error, stdout, stderr) => {
       if (error && error.killed) {
-        reject(new Error(`Command timed out: ${cmd}`));
+        reject(new Error('Command timed out'));
         return;
       }
       resolve({
@@ -26,12 +49,33 @@ export function runCommand(cmd: string): Promise<CommandResult> {
   });
 }
 
+/**
+ * Run a command safely without shell interpolation.
+ * Arguments are passed as an array, preventing injection.
+ */
+export function runCommandWithArgs(binary: string, args: string[]): Promise<CommandResult> {
+  return new Promise((resolve, reject) => {
+    execFile(binary, args, { timeout: 120000, env: getEnhancedEnv() }, (error, stdout, stderr) => {
+      if (error && error.killed) {
+        reject(new Error('Command timed out'));
+        return;
+      }
+      const code = error?.code;
+      resolve({
+        stdout: stdout || '',
+        stderr: stderr || '',
+        exitCode: error ? (typeof code === 'number' ? code : 1) : 0,
+      });
+    });
+  });
+}
+
 export function streamCommand(
   cmd: string,
   onData: (stream: 'stdout' | 'stderr', text: string) => void
 ): Promise<number> {
   return new Promise((resolve, reject) => {
-    const shell = process.platform === 'win32' ? 'cmd.exe' : '/bin/bash';
+    const shell = getShell();
     const shellFlag = process.platform === 'win32' ? '/c' : '-c';
 
     const child = spawn(shell, [shellFlag, cmd], {
@@ -51,7 +95,7 @@ export function streamCommand(
       if (code === 0) {
         resolve(code);
       } else {
-        reject(new Error(`Command failed with exit code ${code}: ${cmd}`));
+        reject(new Error(`Command failed with exit code ${code}`));
       }
     });
 
@@ -59,6 +103,10 @@ export function streamCommand(
       reject(err);
     });
   });
+}
+
+function getShell(): string {
+  return process.platform === 'win32' ? 'cmd.exe' : '/bin/bash';
 }
 
 function getEnhancedEnv(): NodeJS.ProcessEnv {

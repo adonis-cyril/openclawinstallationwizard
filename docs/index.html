@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw Setup Wizard — Download</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #06080F;
+      color: #E6EDF3;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      -webkit-font-smoothing: antialiased;
+    }
+    .container { max-width: 640px; text-align: center; }
+    .logo {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #4F8FF7, #A855F7);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 1.5rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #4F8FF7, #A855F7, #EC4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.75rem;
+    }
+    .subtitle {
+      color: #7D8590;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 2.5rem;
+    }
+    .download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #4F8FF7, #7C5CFC);
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    .download-btn:hover {
+      background: linear-gradient(135deg, #6BA0F8, #9175FD);
+      box-shadow: 0 0 30px rgba(79, 143, 247, 0.3);
+      transform: translateY(-1px);
+    }
+    .download-btn svg { width: 20px; height: 20px; }
+    .other-platforms {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .other-platforms a {
+      color: #7D8590;
+      font-size: 0.875rem;
+      text-decoration: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      border: 1px solid #21262D;
+      transition: all 0.2s;
+    }
+    .other-platforms a:hover {
+      color: #E6EDF3;
+      border-color: #4F8FF7;
+    }
+    .macos-note {
+      margin-top: 2.5rem;
+      padding: 1.25rem;
+      border-radius: 12px;
+      border: 1px solid #21262D;
+      background: #0D1117;
+      text-align: left;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .macos-note h3 {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #FBBF24;
+      margin-bottom: 0.5rem;
+    }
+    .macos-note p {
+      font-size: 0.85rem;
+      color: #7D8590;
+      line-height: 1.6;
+    }
+    .macos-note code {
+      background: #161B22;
+      border: 1px solid #21262D;
+      padding: 0.1em 0.35em;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #4F8FF7;
+      font-family: 'SF Mono', monospace;
+    }
+    .footer {
+      margin-top: 3rem;
+      color: #7D8590;
+      font-size: 0.75rem;
+    }
+    .footer a { color: #4F8FF7; text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">OC</div>
+    <h1>OpenClaw Setup Wizard</h1>
+    <p class="subtitle">
+      Set up your AI assistant in 10 minutes. No terminal required.<br>
+      Download, double-click, and follow the wizard.
+    </p>
+
+    <a id="primary-download" href="#" class="download-btn">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+      </svg>
+      <span id="download-label">Download</span>
+    </a>
+
+    <div class="other-platforms" id="other-platforms"></div>
+
+    <div class="macos-note" id="macos-note" style="display:none;">
+      <h3>First launch on macOS</h3>
+      <p>
+        Since this app is unsigned, macOS will block it on first open.
+        To fix this: <strong>right-click</strong> the app &rarr; click <strong>Open</strong> &rarr;
+        click <strong>Open</strong> again in the dialog. You only need to do this once.
+        Alternatively, run <code>xattr -cr OpenClaw*.app</code> in Terminal.
+      </p>
+    </div>
+
+    <div class="footer">
+      <p>Open source &middot; <a href="https://github.com/adonis-cyril/openclawinstallationwizard">View on GitHub</a></p>
+    </div>
+  </div>
+
+  <script>
+    const REPO = 'adonis-cyril/openclawinstallationwizard';
+    const BASE = `https://github.com/${REPO}/releases/latest/download`;
+
+    const platforms = {
+      mac: { label: 'Download for macOS', file: 'OpenClaw-Setup-Wizard.dmg', other: 'macOS' },
+      win: { label: 'Download for Windows', file: 'OpenClaw-Setup-Wizard.exe', other: 'Windows' },
+      linux: { label: 'Download for Linux', file: 'OpenClaw-Setup-Wizard.AppImage', other: 'Linux' },
+    };
+
+    function detectOS() {
+      const ua = navigator.userAgent.toLowerCase();
+      if (ua.includes('mac')) return 'mac';
+      if (ua.includes('win')) return 'win';
+      return 'linux';
+    }
+
+    const os = detectOS();
+    const primary = platforms[os];
+    const btn = document.getElementById('primary-download');
+    const label = document.getElementById('download-label');
+
+    btn.href = `${BASE}/${primary.file}`;
+    label.textContent = primary.label;
+
+    if (os === 'mac') {
+      document.getElementById('macos-note').style.display = 'block';
+    }
+
+    const otherDiv = document.getElementById('other-platforms');
+    Object.entries(platforms).forEach(([key, p]) => {
+      if (key !== os) {
+        const a = document.createElement('a');
+        a.href = `${BASE}/${p.file}`;
+        a.textContent = p.other;
+        otherDiv.appendChild(a);
+      }
+    });
+  </script>
+</body>
+</html>
