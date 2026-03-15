@@ -9,6 +9,7 @@ export interface ElectronAPI {
   healthCheck: () => Promise<{ healthy: boolean; error?: string }>;
   getGatewayToken: () => Promise<{ token: string | null; error?: string }>;
   restartGateway: () => Promise<{ success: boolean; error?: string }>;
+  fullReset: () => Promise<{ success: boolean; error?: string }>;
   saveState: (state: Record<string, unknown>) => Promise<void>;
   loadState: () => Promise<Record<string, unknown> | null>;
   onCommandOutput: (callback: (data: { stream: string; text: string }) => void) => () => void;
@@ -36,6 +37,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   healthCheck: () => ipcRenderer.invoke('health-check'),
   getGatewayToken: () => ipcRenderer.invoke('get-gateway-token'),
   restartGateway: () => ipcRenderer.invoke('restart-gateway'),
+  fullReset: () => ipcRenderer.invoke('full-reset'),
   saveState: (state: Record<string, unknown>) => ipcRenderer.invoke('save-state', state),
   loadState: () => ipcRenderer.invoke('load-state'),
   onCommandOutput: (callback: (data: { stream: string; text: string }) => void) => {

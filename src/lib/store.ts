@@ -68,6 +68,7 @@ export interface WizardState {
   goToStep: (step: number) => void;
   nextStep: () => void;
   prevStep: () => void;
+  resetCurrentStep: () => void;
   resetWizard: () => void;
   hydrateFromSaved: (state: Record<string, unknown>) => void;
   getSerializableState: () => Record<string, unknown>;
@@ -186,6 +187,29 @@ export const useWizardStore = create<WizardState>((set, get) => ({
     const { currentStep } = get();
     if (currentStep > 0) {
       set({ currentStep: currentStep - 1 });
+    }
+  },
+
+  resetCurrentStep: () => {
+    const { currentStep } = get();
+    const stepResets: Record<number, Partial<typeof initialState>> = {
+      0: { installType: null },                                          // Welcome
+      1: { selectedUseCases: [] },                                        // Use Cases
+      2: { systemCheckResults: {} },                                      // System Check
+      3: {},                                                              // Install (re-triggers on mount)
+      4: { selectedProvider: null, apiKey: '', apiKeyValid: false, selectedModel: null }, // Provider
+      5: { selectedChannels: {} },                                        // Channels
+      6: { selectedSkills: [] },                                          // Skills
+      7: { selectedHooks: [] },                                           // Hooks
+      8: { gatewayStarted: false, gatewayToken: null },                   // Gateway
+      9: {},                                                              // Best Practices
+      10: {},                                                             // Complete
+    };
+    const reset = stepResets[currentStep];
+    if (reset) {
+      const updated = new Set(get().completedSteps);
+      updated.delete(currentStep);
+      set({ ...reset, completedSteps: updated, terminalOutput: [] });
     }
   },
 
