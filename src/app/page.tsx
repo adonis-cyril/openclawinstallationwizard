@@ -49,18 +49,25 @@ export default function Home() {
     loadSaved();
   }, []);
 
-  // Persist state on changes
+  // Persist state on changes (debounced to avoid excessive writes during streaming)
   useEffect(() => {
-    const unsubscribe = useWizardStore.subscribe(async () => {
-      try {
-        const api = getAPI();
-        const state = useWizardStore.getState().getSerializableState();
-        await api.saveState(state);
-      } catch {
-        // Silently fail persistence
-      }
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const unsubscribe = useWizardStore.subscribe(() => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(async () => {
+        try {
+          const api = getAPI();
+          const state = useWizardStore.getState().getSerializableState();
+          await api.saveState(state);
+        } catch {
+          // Silently fail persistence
+        }
+      }, 1000);
     });
-    return unsubscribe;
+    return () => {
+      unsubscribe();
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   const CurrentStepComponent = STEP_COMPONENTS[currentStep] || WelcomeStep;

@@ -1,8 +1,8 @@
 import { ipcMain, BrowserWindow } from 'electron';
 import { runSystemCheck } from './detection';
-import { runCommand, runCommandWithArgs, streamCommand, sanitizeIdentifier, sanitizePort } from './commands';
+import { runCommand, runCommandWithArgs, streamCommand, streamCommandWithArgs, sanitizeIdentifier, sanitizePort } from './commands';
 import { saveWizardState, loadWizardState } from './state';
-import { buildConfigCommand, installSkills, configureChannels, configureHooks } from './config';
+import { buildConfigArgs, installSkills, configureChannels, configureHooks } from './config';
 import { attemptSelfHeal } from './self-heal';
 import * as os from 'os';
 
@@ -130,14 +130,14 @@ export function registerIpcHandlers(): void {
   ipcMain.handle('configure', async (_event, config: Record<string, unknown>) => {
     const win = getMainWindow();
     try {
-      // Build and run the openclaw onboard command
-      const onboardCmd = buildConfigCommand(config);
+      // Build and run the openclaw onboard command (no shell — prevents API key injection)
+      const { binary, args } = buildConfigArgs(config);
       if (win) {
-        await streamCommand(onboardCmd, (stream, text) => {
+        await streamCommandWithArgs(binary, args, (stream, text) => {
           win.webContents.send('command-output', { stream, text });
         }, { timeoutMs: 60000 });
       } else {
-        await runCommand(onboardCmd);
+        await runCommandWithArgs(binary, args);
       }
 
       // Install skills

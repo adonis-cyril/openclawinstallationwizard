@@ -72,6 +72,7 @@ export interface WizardState {
   resetWizard: () => void;
   hydrateFromSaved: (state: Record<string, unknown>) => void;
   getSerializableState: () => Record<string, unknown>;
+  getConfigPayload: () => Record<string, unknown>;
 }
 
 const initialState = {
@@ -163,9 +164,11 @@ export const useWizardStore = create<WizardState>((set, get) => ({
   setGatewayToken: (token) => set({ gatewayToken: token }),
 
   appendTerminalOutput: (text) =>
-    set((state) => ({
-      terminalOutput: [...state.terminalOutput, text],
-    })),
+    set((state) => {
+      const MAX_LINES = 500;
+      const updated = [...state.terminalOutput, text];
+      return { terminalOutput: updated.length > MAX_LINES ? updated.slice(-MAX_LINES) : updated };
+    }),
 
   clearTerminalOutput: () => set({ terminalOutput: [] }),
 
@@ -242,7 +245,7 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       installType: state.installType,
       selectedUseCases: state.selectedUseCases,
       selectedProvider: state.selectedProvider,
-      apiKey: state.apiKey,
+      // apiKey and gatewayToken are intentionally excluded — secrets must not be persisted to disk
       apiKeyValid: state.apiKeyValid,
       selectedModel: state.selectedModel,
       selectedChannels: state.selectedChannels,
@@ -250,7 +253,19 @@ export const useWizardStore = create<WizardState>((set, get) => ({
       selectedHooks: state.selectedHooks,
       gatewayPort: state.gatewayPort,
       gatewayStarted: state.gatewayStarted,
-      gatewayToken: state.gatewayToken,
+    };
+  },
+
+  getConfigPayload: () => {
+    const state = get();
+    return {
+      selectedProvider: state.selectedProvider,
+      apiKey: state.apiKey,
+      selectedModel: state.selectedModel,
+      selectedChannels: state.selectedChannels,
+      selectedSkills: state.selectedSkills,
+      selectedHooks: state.selectedHooks,
+      gatewayPort: state.gatewayPort,
     };
   },
 }));
